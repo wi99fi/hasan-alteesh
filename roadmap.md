@@ -1,0 +1,9 @@
+# Roadmap
+- [x] Arabic Alteesh design system and app shell
+- [x] Authentication and protected navigation
+- [x] Dashboard and core clinic modules
+- [x] Patients and appointments workflows
+- [x] Treatments, prescriptions, dental chart, invoices, payments
+- [x] Reports and clinic branding customization
+- [x] Role-based page visibility and database permissions
+- [ ] End-to-end verification with the clinic owner account — blocked until the first account is created
