@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-type AnyRow = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRow = any;
 
 export const conditions = [
   { id: "سليم", color: "#2f9e6f" }, { id: "تسوس", color: "#d9822b" }, { id: "حشوة", color: "#3b7dd8" },
