@@ -2,13 +2,14 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, Users, X } from "lucide-react";
+import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, MessageCircle, Download, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureClinicProfile, createClinicUser } from "@/lib/clinic.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DentalChart, whatsappLink } from "@/components/dental-chart";
 import logo from "@/assets/alteesh-clinic-logo.png";
 
 type Page = "dashboard" | "patients" | "appointments" | "clinical" | "invoices" | "reports" | "team" | "settings";
@@ -73,7 +74,7 @@ export function ClinicApp({ page }: { page: Page }) {
     <main className="app-main">
       <header className="topbar"><Button className="menu-button" variant="ghost" size="icon" onClick={() => setMenu(true)}><Menu /></Button><div className="global-search"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث سريع..." /></div><span className="today">{new Intl.DateTimeFormat("ar-SY", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span></header>
       <div className="page-wrap"><PageHeading title={title[0]} subtitle={title[1]} action={page !== "dashboard" && page !== "reports" ? <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus /> إضافة جديد</Button></DialogTrigger><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>إضافة {title[0]}</DialogTitle></DialogHeader><CreateForm page={page} data={data ?? undefined} done={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clinic"] }); }} /></DialogContent></Dialog> : undefined} />
-      {isLoading || !data || !bootstrapped ? <Loading /> : error ? <Empty title="تعذر تحميل البيانات" text="تحقق من اتصالك ثم أعد المحاولة." /> : !allowed ? <div className="panel empty-state"><ShieldAlert/><h3>ليس لديك صلاحية لهذه الصفحة</h3><p>تواصل مع مدير العيادة إذا كنت تحتاج إلى الوصول.</p></div> : <PageBody page={page} data={data} search={search} />}</div>
+      {isLoading || !data || !bootstrapped ? <Loading /> : error ? <Empty title="تعذر تحميل البيانات" text="تحقق من اتصالك ثم أعد المحاولة." /> : !allowed ? <div className="panel empty-state"><ShieldAlert/><h3>ليس لديك صلاحية لهذه الصفحة</h3><p>تواصل مع مدير العيادة إذا كنت تحتاج إلى الوصول.</p></div> : <PageBody page={page} data={data} search={search} myRoles={myRoles} />}</div>
     </main>
   </div>;
 }
@@ -83,9 +84,9 @@ function Loading() { return <div className="panel loading"><span /><span /><span
 function Empty({ title, text }: { title: string; text: string }) { return <div className="panel empty-state"><HeartPulse /><h3>{title}</h3><p>{text}</p></div>; }
 function money(n: number | string) { return `${Number(n).toLocaleString("ar-SY")} ل.س`; }
 
-function PageBody({ page, data, search }: { page: Page; data: Awaited<ReturnType<typeof loadClinic>>; search: string }) {
+function PageBody({ page, data, search, myRoles }: { page: Page; data: Awaited<ReturnType<typeof loadClinic>>; search: string; myRoles: Role[] }) {
   if (page === "dashboard") return <Dashboard data={data} />;
-  if (page === "patients") return <Patients data={data} search={search} />;
+  if (page === "patients") return <Patients data={data} search={search} myRoles={myRoles} />;
   if (page === "appointments") return <Appointments data={data} />;
   if (page === "clinical") return <Clinical data={data} />;
   if (page === "invoices") return <Invoices data={data} />;
@@ -120,7 +121,7 @@ async function exportExcel(data: Awaited<ReturnType<typeof loadClinic>>) {
 }
 function Clinical({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) { return <div className="dashboard-grid"><div className="panel"><SectionTitle title="العلاجات الأخيرة" link="/clinical" />{data.treatments.map((t) => <div className="record-row" key={t.id}><Stethoscope /><div><strong>{t.title}</strong><span>{t.patients?.full_name} · الأسنان {t.tooth_numbers || "—"}</span></div><b>{money(t.cost)}</b></div>)}</div><div className="panel"><SectionTitle title="الوصفات الأخيرة" link="/clinical" />{data.prescriptions.map((p) => <div className="record-row" key={p.id}><FileText /><div><strong>{p.medication}</strong><span>{p.patients?.full_name} · {p.dosage ?? "حسب الوصفة"}</span></div></div>)}</div><div className="panel"><SectionTitle title="سجل الأسنان" link="/clinical" />{data.dentalChart.map((d) => <div className="record-row" key={d.id}><span className="avatar">{d.tooth_number}</span><div><strong>{d.condition}</strong><span>{d.patients?.full_name} · {d.treatment ?? "دون إجراء"}</span></div></div>)}</div></div>; }
 function Invoices({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) { return <div className="panel table-panel"><table><thead><tr><th>رقم الفاتورة</th><th>المريض</th><th>الإجمالي</th><th>المدفوع</th><th>الحالة</th></tr></thead><tbody>{data.invoices.map((i) => <tr key={i.id}><td>{i.invoice_number}</td><td>{i.patients?.full_name}</td><td>{money(i.total)}</td><td>{money(i.paid)}</td><td><span className={`status status-${i.status}`}>{statusLabel(i.status)}</span></td></tr>)}</tbody></table>{!data.invoices.length && <Empty title="لا توجد فواتير" text="أنشئ أول فاتورة لمريض." />}<p className="subheading">الدفعات المسجلة: {data.payments.length}</p></div>; }
-function Reports({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) { const billed=data.invoices.reduce((s,i)=>s+Number(i.total),0), paid=data.invoices.reduce((s,i)=>s+Number(i.paid),0); return <><section className="stat-grid"><Stat icon={<CircleDollarSign />} label="إجمالي الفواتير" value={money(billed)} note="القيمة الصادرة"/><Stat icon={<Activity />} label="المحصل" value={money(paid)} note="دفعات مسجلة"/><Stat icon={<FileText />} label="المتبقي" value={money(billed-paid)} note="ذمم مفتوحة"/><Stat icon={<CalendarDays />} label="المواعيد المكتملة" value={data.appointments.filter(a=>a.status==='completed').length} note="زيارة مكتملة"/></section><div className="panel chart"><h2>توزيع حالة المواعيد</h2>{["completed","confirmed","scheduled","cancelled"].map(s=><div className="bar-row" key={s}><span>{statusLabel(s)}</span><div><i style={{width:`${Math.max(4,data.appointments.length ? data.appointments.filter(a=>a.status===s).length/data.appointments.length*100:4)}%`}} /></div><b>{data.appointments.filter(a=>a.status===s).length}</b></div>)}</div></>; }
+function Reports({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) { const billed=data.invoices.reduce((s,i)=>s+Number(i.total),0), paid=data.invoices.reduce((s,i)=>s+Number(i.paid),0); return <><div className="row-actions" style={{marginBottom:16}}><Button onClick={()=>exportExcel(data)}><Download/> تصدير نسخة احتياطية (Excel)</Button></div><section className="stat-grid"><Stat icon={<CircleDollarSign />} label="إجمالي الفواتير" value={money(billed)} note="القيمة الصادرة"/><Stat icon={<Activity />} label="المحصل" value={money(paid)} note="دفعات مسجلة"/><Stat icon={<FileText />} label="المتبقي" value={money(billed-paid)} note="ذمم مفتوحة"/><Stat icon={<CalendarDays />} label="المواعيد المكتملة" value={data.appointments.filter(a=>a.status==='completed').length} note="زيارة مكتملة"/></section><div className="panel chart"><h2>توزيع حالة المواعيد</h2>{["completed","confirmed","scheduled","cancelled"].map(s=><div className="bar-row" key={s}><span>{statusLabel(s)}</span><div><i style={{width:`${Math.max(4,data.appointments.length ? data.appointments.filter(a=>a.status===s).length/data.appointments.length*100:4)}%`}} /></div><b>{data.appointments.filter(a=>a.status===s).length}</b></div>)}</div></>; }
 function Team({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) { return <><div className="team-grid">{data.profiles.map((p) => <article className="team-card" key={p.id}><div className="avatar avatar-lg">{p.full_name.slice(0,1)}</div><h3>{p.full_name}</h3><p>{p.specialty || "فريق العيادة"}</p><span className="status status-confirmed">نشط</span></article>)}</div><h2 className="subheading">كراسي العيادة</h2><div className="chair-grid">{data.chairs.map(c=><div className="chair-tile" key={c.id}><span className="chair-dot" style={{backgroundColor:c.color}}/><strong>{c.name}</strong><small>{c.is_active?'متاح':'غير نشط'}</small></div>)}</div></>; }
 
 function SettingsPage({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) {
