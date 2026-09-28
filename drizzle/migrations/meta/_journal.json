@@ -22,6 +22,13 @@
       "when": 1790592411080,
       "tag": "0002_secure_role_helpers_and_bootstrap",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790592568327,
+      "tag": "0003_sync_invoice_payments",
+      "breakpoints": true
     }
   ]
 }
