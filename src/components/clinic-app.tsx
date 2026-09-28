@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, Stethoscope, UserRound, Users, X } from "lucide-react";
+import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureClinicProfile, createClinicUser } from "@/lib/clinic.functions";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import logo from "@/assets/alteesh-clinic-logo.png";
 
 type Page = "dashboard" | "patients" | "appointments" | "clinical" | "invoices" | "reports" | "team" | "settings";
 type AnyRow = Record<string, any>;
+type Role = "super_admin" | "admin" | "doctor" | "nurse" | "receptionist";
 
 const nav = [
   ["dashboard", "/dashboard", "نظرة عامة", LayoutDashboard], ["appointments", "/appointments", "الجدول اليومي", CalendarDays],
@@ -20,6 +21,15 @@ const nav = [
   ["invoices", "/invoices", "الفواتير", FileText], ["reports", "/reports", "التقارير", Activity],
   ["team", "/team", "الفريق والكراسي", UserRound], ["settings", "/settings", "إعدادات العيادة", Settings],
 ] as const;
+
+const pageRoles: Record<Page, Role[]> = {
+  dashboard: ["super_admin", "admin", "doctor", "nurse", "receptionist"],
+  patients: ["super_admin", "admin", "doctor", "nurse", "receptionist"],
+  appointments: ["super_admin", "admin", "doctor", "nurse", "receptionist"],
+  clinical: ["super_admin", "admin", "doctor", "nurse"],
+  invoices: ["super_admin", "admin", "receptionist"], reports: ["super_admin", "admin"],
+  team: ["super_admin", "admin"], settings: ["super_admin", "admin"],
+};
 
 const titles: Record<Page, [string, string]> = {
   dashboard: ["نظرة عامة", "ملخص نشاط العيادة اليوم"], patients: ["المرضى", "الملفات والسجل الطبي"],
@@ -44,23 +54,24 @@ async function loadClinic() {
 
 export function ClinicApp({ page }: { page: Page }) {
   const navigate = useNavigate(); const qc = useQueryClient(); const ensure = useServerFn(ensureClinicProfile);
-  const [open, setOpen] = useState(false); const [menu, setMenu] = useState(false); const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false); const [menu, setMenu] = useState(false); const [search, setSearch] = useState(""); const [userId,setUserId]=useState<string>(); const [bootstrapped,setBootstrapped]=useState(false);
   const { data, isLoading, error } = useQuery({ queryKey: ["clinic"], queryFn: loadClinic });
-  useEffect(() => { supabase.auth.getUser().then(({ data: auth }) => { if (auth.user) ensure({ data: { fullName: String(auth.user.user_metadata?.["full_name"] ?? auth.user.email?.split("@")[0] ?? "مستخدم العيادة") } }).then(() => qc.invalidateQueries({ queryKey: ["clinic"] })); }); }, [ensure, qc]);
-  const me = data?.profiles.find((p) => data.roles.some((r) => r.user_id === p.id));
+  useEffect(() => { supabase.auth.getUser().then(async ({ data: auth }) => { if (auth.user) { setUserId(auth.user.id); await ensure({ data: { fullName: String(auth.user.user_metadata?.["full_name"] ?? auth.user.email?.split("@")[0] ?? "مستخدم العيادة") } }); await qc.invalidateQueries({ queryKey: ["clinic"] }); } setBootstrapped(true); }); }, [ensure, qc]);
+  const myRoles=(data?.roles.filter(r=>r.user_id===userId).map(r=>r.role)??[]) as Role[]; const allowed=pageRoles[page].some(role=>myRoles.includes(role));
+  const me = data?.profiles.find((p) => p.id===userId);
   const settings = data?.settings; const title = titles[page];
   async function signOut() { await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); await navigate({ to: "/auth", replace: true }); }
   return <div className="clinic-shell" dir="rtl" style={{ "--primary": settings?.primary_color, "--accent": settings?.accent_color } as React.CSSProperties}>
     {menu && <button className="mobile-scrim" aria-label="إغلاق القائمة" onClick={() => setMenu(false)} />}
     <aside className={`sidebar ${menu ? "sidebar-open" : ""}`}>
       <div className="brand"><img src={settings?.logo_url ?? logo} alt="شعار العيادة" /><div><strong>{settings?.clinic_name ?? "عيادة التيش"}</strong><span>نظام الإدارة الطبية</span></div><Button className="mobile-close" variant="ghost" size="icon" onClick={() => setMenu(false)}><X /></Button></div>
-      <nav>{nav.map(([id, to, label, Icon]) => <Link key={id} to={to} className={`nav-link ${page === id ? "nav-link-active" : ""}`} onClick={() => setMenu(false)}><Icon /> <span>{label}</span></Link>)}</nav>
+       <nav>{nav.filter(([id])=>pageRoles[id].some(role=>myRoles.includes(role))).map(([id, to, label, Icon]) => <Link key={id} to={to} className={`nav-link ${page === id ? "nav-link-active" : ""}`} onClick={() => setMenu(false)}><Icon /> <span>{label}</span></Link>)}</nav>
       <div className="sidebar-user"><div className="avatar">{me?.full_name?.slice(0, 1) ?? "م"}</div><div><strong>{me?.full_name ?? "مستخدم العيادة"}</strong><span>حساب نشط</span></div><Button variant="ghost" size="icon" onClick={signOut} title="تسجيل الخروج"><LogOut /></Button></div>
     </aside>
     <main className="app-main">
       <header className="topbar"><Button className="menu-button" variant="ghost" size="icon" onClick={() => setMenu(true)}><Menu /></Button><div className="global-search"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث سريع..." /></div><span className="today">{new Intl.DateTimeFormat("ar-SY", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span></header>
       <div className="page-wrap"><PageHeading title={title[0]} subtitle={title[1]} action={page !== "dashboard" && page !== "reports" ? <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus /> إضافة جديد</Button></DialogTrigger><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>إضافة {title[0]}</DialogTitle></DialogHeader><CreateForm page={page} data={data ?? undefined} done={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clinic"] }); }} /></DialogContent></Dialog> : undefined} />
-      {isLoading || !data ? <Loading /> : error ? <Empty title="تعذر تحميل البيانات" text="تحقق من اتصالك ثم أعد المحاولة." /> : <PageBody page={page} data={data} search={search} />}</div>
+      {isLoading || !data || !bootstrapped ? <Loading /> : error ? <Empty title="تعذر تحميل البيانات" text="تحقق من اتصالك ثم أعد المحاولة." /> : !allowed ? <div className="panel empty-state"><ShieldAlert/><h3>ليس لديك صلاحية لهذه الصفحة</h3><p>تواصل مع مدير العيادة إذا كنت تحتاج إلى الوصول.</p></div> : <PageBody page={page} data={data} search={search} />}</div>
     </main>
   </div>;
 }
