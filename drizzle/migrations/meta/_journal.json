@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790592198276,
+      "tag": "0000_clinic_core_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790592255641,
+      "tag": "0001_clinic_branding_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790592411080,
+      "tag": "0002_secure_role_helpers_and_bootstrap",
+      "breakpoints": true
+    }
+  ]
 }

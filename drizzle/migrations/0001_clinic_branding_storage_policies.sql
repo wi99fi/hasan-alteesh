@@ -1,0 +1,4 @@
+CREATE POLICY "Staff view clinic branding" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'clinic-branding' AND public.is_staff(auth.uid()));
+CREATE POLICY "Admins upload clinic branding" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'clinic-branding' AND (public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin')));
+CREATE POLICY "Admins update clinic branding" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'clinic-branding' AND (public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin'))) WITH CHECK (bucket_id = 'clinic-branding' AND (public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin')));
+CREATE POLICY "Admins delete clinic branding" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'clinic-branding' AND (public.has_role(auth.uid(),'super_admin') OR public.has_role(auth.uid(),'admin')));

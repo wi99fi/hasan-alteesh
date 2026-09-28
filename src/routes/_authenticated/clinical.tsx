@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { ClinicApp } from "@/components/clinic-app";
+export const Route=createFileRoute("/_authenticated/clinical")({head:()=>({meta:[{title:"العلاجات والوصفات — عيادة التيش"},{name:"description",content:"متابعة علاجات ووصفات المرضى."},{property:"og:title",content:"العلاجات والوصفات — عيادة التيش"},{property:"og:description",content:"متابعة علاجات ووصفات المرضى."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ClinicApp page="clinical"/>});
