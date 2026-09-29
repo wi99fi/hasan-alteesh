@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -45,9 +45,17 @@ function AuthPage() {
     setBusy(false);
   }
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: "/dashboard", replace: true }); });
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) navigate({ to: "/dashboard", replace: true });
+    });
+    return () => data.subscription.unsubscribe();
+  }, [navigate]);
+
   async function googleLogin() {
     setBusy(true); setMessage("");
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/auth` });
     if (result.error) setMessage(result.error.message); else if (!result.redirected) await navigate({ to: "/dashboard" });
     setBusy(false);
   }
