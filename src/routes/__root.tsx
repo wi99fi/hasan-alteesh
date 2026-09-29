@@ -78,6 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#287F7B" },
       { title: "عيادة التيش" },
       { name: "description", content: "نظام إدارة عيادة التيش" },
       { name: "author", content: "Alteesh Clinic" },
@@ -93,6 +94,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -126,6 +129,9 @@ function RootComponent() {
     });
     return () => data.subscription.unsubscribe();
   }, [queryClient, router]);
+  useEffect(() => {
+    if ("serviceWorker" in navigator && window.self === window.top) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
