@@ -338,6 +338,7 @@ export type Database = {
           full_name: string
           gender: string | null
           id: string
+          is_active: boolean
           medical_notes: string | null
           phone: string | null
           surgeries: string | null
@@ -355,6 +356,7 @@ export type Database = {
           full_name: string
           gender?: string | null
           id?: string
+          is_active?: boolean
           medical_notes?: string | null
           phone?: string | null
           surgeries?: string | null
@@ -372,6 +374,7 @@ export type Database = {
           full_name?: string
           gender?: string | null
           id?: string
+          is_active?: boolean
           medical_notes?: string | null
           phone?: string | null
           surgeries?: string | null
