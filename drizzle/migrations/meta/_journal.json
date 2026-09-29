@@ -43,6 +43,13 @@
       "when": 1790667999712,
       "tag": "0005_add_patient_archive_status",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790669052230,
+      "tag": "0006_grant_owner_super_admin",
+      "breakpoints": true
     }
   ]
 }
