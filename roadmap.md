@@ -7,3 +7,6 @@
 - [x] Reports and clinic branding customization
 - [x] Role-based page visibility and database permissions
 - [ ] End-to-end verification with the clinic owner account — blocked until the first account is created
+- [ ] تحسين شكل التبويبات في جميع الشاشات
+- [ ] إنشاء صفحة عرض عامة للعيادة
+- [ ] إضافة تخصيص شامل للواجهات من داخل النظام
