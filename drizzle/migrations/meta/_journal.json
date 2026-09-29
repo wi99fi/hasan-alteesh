@@ -29,6 +29,20 @@
       "when": 1790592568327,
       "tag": "0003_sync_invoice_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790667982702,
+      "tag": "0004_expand_clinic_presentation_customization",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790667999712,
+      "tag": "0005_add_patient_archive_status",
+      "breakpoints": true
     }
   ]
 }
