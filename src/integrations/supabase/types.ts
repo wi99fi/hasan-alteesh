@@ -140,36 +140,57 @@ export type Database = {
         Row: {
           accent_color: string
           address: string | null
+          card_style: string
           clinic_name: string
           email: string | null
+          font_family: string
+          hero_image_url: string | null
           id: string
+          interface_density: string
           logo_url: string | null
+          opening_hours: string | null
           phone: string | null
           primary_color: string
+          public_description: string | null
+          public_services: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           accent_color?: string
           address?: string | null
+          card_style?: string
           clinic_name?: string
           email?: string | null
+          font_family?: string
+          hero_image_url?: string | null
           id?: string
+          interface_density?: string
           logo_url?: string | null
+          opening_hours?: string | null
           phone?: string | null
           primary_color?: string
+          public_description?: string | null
+          public_services?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           accent_color?: string
           address?: string | null
+          card_style?: string
           clinic_name?: string
           email?: string | null
+          font_family?: string
+          hero_image_url?: string | null
           id?: string
+          interface_density?: string
           logo_url?: string | null
+          opening_hours?: string | null
           phone?: string | null
           primary_color?: string
+          public_description?: string | null
+          public_services?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -559,6 +580,22 @@ export type Database = {
       claim_initial_super_admin: {
         Args: { _full_name: string }
         Returns: boolean
+      }
+      get_public_clinic_settings: {
+        Args: never
+        Returns: {
+          accent_color: string
+          address: string
+          clinic_name: string
+          email: string
+          hero_image_url: string
+          logo_url: string
+          opening_hours: string
+          phone: string
+          primary_color: string
+          public_description: string
+          public_services: string
+        }[]
       }
       has_role: {
         Args: {
