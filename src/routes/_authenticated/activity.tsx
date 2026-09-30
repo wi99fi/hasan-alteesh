@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { ClinicApp } from "@/components/clinic-app";
+export const Route=createFileRoute("/_authenticated/activity")({head:()=>({meta:[{title:"سجل النشاط — Alteesh Clinic"},{name:"description",content:"سجل العمليات على النظام."},{property:"og:title",content:"سجل النشاط — Alteesh Clinic"},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ClinicApp page="activity"/>});

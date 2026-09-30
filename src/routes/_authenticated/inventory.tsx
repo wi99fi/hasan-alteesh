@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { ClinicApp } from "@/components/clinic-app";
+export const Route=createFileRoute("/_authenticated/inventory")({head:()=>({meta:[{title:"المخزون — Alteesh Clinic"},{name:"description",content:"إدارة المواد والمستلزمات وحركتها."},{property:"og:title",content:"المخزون — Alteesh Clinic"},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary"}]}),component:()=> <ClinicApp page="inventory"/>});
