@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock, MapPin, Phone, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,38 @@ function BookingForm({ services }: { services: string[] }) {
   </form>;
 }
 
+type GalleryItem = { id: string; image_url: string; caption: string | null };
+
+function Gallery() {
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [open, setOpen] = useState<GalleryItem | null>(null);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any).from("clinic_gallery").select("id,image_url,caption").order("sort_order", { ascending: true }).order("created_at", { ascending: false }).limit(24);
+      if (alive && Array.isArray(data)) setItems(data as GalleryItem[]);
+    })().catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  if (!items.length) return null;
+  return <section className="pub-sec" id="gallery">
+    <h2>معرض الصور</h2>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 12 }}>
+      {items.map((it) => <button key={it.id} type="button" onClick={() => setOpen(it)} aria-label={it.caption || "عرض الصورة"} style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", textAlign: "inherit" }}>
+        <img src={it.image_url} alt={it.caption || "صورة من العيادة"} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, display: "block" }} />
+        {it.caption && <small style={{ display: "block", marginTop: 6, color: "var(--muted-foreground)" }}>{it.caption}</small>}
+      </button>)}
+    </div>
+    {open && <div role="dialog" aria-modal="true" onClick={() => setOpen(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", display: "grid", placeItems: "center", zIndex: 100, padding: 16, cursor: "zoom-out" }}>
+      <figure style={{ margin: 0, textAlign: "center" }}>
+        <img src={open.image_url} alt={open.caption || "صورة من العيادة"} style={{ maxWidth: "92vw", maxHeight: "82vh", objectFit: "contain", borderRadius: 8 }} />
+        {open.caption && <figcaption style={{ color: "#fff", marginTop: 10 }}>{open.caption}</figcaption>}
+      </figure>
+    </div>}
+  </section>;
+}
+
 function PublicHome() {
   const c = Route.useLoaderData() as Record<string, unknown> | null;
   const name = "Alteesh Clinic";
@@ -74,8 +106,7 @@ function PublicHome() {
   const wa = phone.replace(/\D/g, "").replace(/^0/, "963");
   return <main className="pub" dir="rtl">
     <nav className="pub-nav">
-      <img src={c?.["logo_url"] ? String(c["logo_url"]) : logo} alt={`شعار ${name}`} />
-      <Button asChild variant="outline"><Link to="/auth">دخول الموظفين</Link></Button>
+      <Link to="/auth" aria-label={name} style={{ display: "inline-flex", cursor: "pointer" }}><img src={c?.["logo_url"] ? String(c["logo_url"]) : logo} alt={`شعار ${name}`} /></Link>
     </nav>
     <section className="pub-hero">
       <div>
@@ -90,6 +121,7 @@ function PublicHome() {
       </div>
       <img src={c?.["hero_image_url"] ? String(c["hero_image_url"]) : hero} alt="عيادة الأسنان" />
     </section>
+    <Gallery />
     <section className="pub-sec" id="book">
       <h2>اطلب موعداً</h2>
       <BookingForm services={services} />
