@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
     { name: "description", content: "Alteesh Clinic لطب الأسنان: خدماتنا، ساعات العمل، وطرق التواصل وحجز المواعيد." },
     { property: "og:title", content: "Alteesh Clinic — رعاية أسنان بثقة" },
     { property: "og:description", content: "Alteesh Clinic لطب الأسنان: خدماتنا، ساعات العمل، وطرق التواصل." },
-    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+    { property: "og:type", content: "website" }, { property: "og:image", content: "https://alteesh.lovable.app/og-image.png" }, { property: "og:image:width", content: "1200" }, { property: "og:image:height", content: "630" }, { name: "twitter:card", content: "summary_large_image" }, { name: "twitter:image", content: "https://alteesh.lovable.app/og-image.png" },
   ] }),
   errorComponent: () => <div className="pub-sec">تعذر تحميل الصفحة</div>,
   notFoundComponent: () => <div className="pub-sec">غير موجود</div>,

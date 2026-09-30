@@ -19,6 +19,23 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const AUTH_CSS = `
+.auth-page{--n:#0b4768;--s:#66adcd;--c:#d9ecf6;--ink:#062a40;--primary:#0b4768;--primary-foreground:#fff;--ring:#66adcd;background:#fff}
+.auth-page .auth-brand{background:var(--s);border-inline-end:3px solid var(--n);gap:22px;padding:24px}
+.auth-page .auth-brand:after{background-image:radial-gradient(rgba(11,71,104,.2) 2px,transparent 2px);background-size:26px 26px}
+.auth-page .auth-brand img{filter:none;width:min(420px,72%);background:var(--c);border:3px solid var(--n);border-radius:28px;box-shadow:8px 8px 0 var(--n);padding:22px}
+.auth-page .auth-brand p{color:var(--ink);font-weight:800;font-size:18px}
+.auth-page .auth-panel{background:var(--c)}
+.auth-page .auth-card{background:#fff;border:2.5px solid var(--n);border-radius:22px;box-shadow:7px 7px 0 var(--n)}
+.auth-page .auth-card h1{color:var(--n)}
+.auth-page .eyebrow{color:var(--n);font-weight:800}
+.auth-page input{border:2px solid var(--n);border-radius:12px;background:#fff}
+.auth-page button[data-slot="button"]{border:2.5px solid var(--n);border-radius:14px;font-weight:800;box-shadow:3px 3px 0 var(--n)}
+.auth-page .auth-links button,.auth-page .password-field button{box-shadow:none;border:0}
+.auth-page .auth-links button{color:var(--n);font-weight:700;text-decoration:underline}
+@media(max-width:800px){.auth-page .auth-brand{border-inline-end:0;border-bottom:3px solid var(--n);padding:20px}.auth-page .auth-brand img{width:160px;padding:14px}.auth-page .auth-brand p{display:none}}
+`;
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
@@ -61,6 +78,7 @@ function AuthPage() {
   }
 
   return <main className="auth-page" dir="rtl">
+    <style dangerouslySetInnerHTML={{ __html: AUTH_CSS }} />
     <section className="auth-brand"><img src={logo} alt="شعار Alteesh Clinic" /><p>نظام متكامل لإدارة عيادتك</p></section>
     <section className="auth-panel">
       <div className="auth-card">
