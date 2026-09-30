@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, MessageCircle, Download, Users, X, Eye, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, MessageCircle, Download, Users, X, Eye, Pencil, Trash2, Inbox, Package, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureClinicProfile, createClinicUser, deleteClinicUser, updateClinicUser } from "@/lib/clinic.functions";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ import logo from "@/assets/alteesh-clinic-logo.png";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
 
-type Page = "dashboard" | "patients" | "appointments" | "clinical" | "invoices" | "reports" | "team" | "settings";
+type Page = "dashboard" | "patients" | "appointments" | "clinical" | "invoices" | "reports" | "team" | "settings" | "inventory" | "bookings" | "activity";
+type ClinicData = Awaited<ReturnType<typeof loadClinic>>;
 type AnyRow = Record<string, any>;
 type Role = "super_admin" | "admin" | "doctor" | "nurse" | "receptionist";
 
@@ -26,6 +27,7 @@ const nav = [
   ["patients", "/patients", "المرضى", Users], ["clinical", "/clinical", "العلاجات والوصفات", Stethoscope],
   ["invoices", "/invoices", "الفواتير", FileText], ["reports", "/reports", "التقارير", Activity],
   ["team", "/team", "الفريق والكراسي", UserRound], ["settings", "/settings", "إعدادات العيادة", Settings],
+  ["bookings", "/bookings", "طلبات الحجز", Inbox], ["inventory", "/inventory", "المخزون", Package], ["activity", "/activity", "سجل النشاط", History],
 ] as const;
 
 const pageRoles: Record<Page, Role[]> = {
@@ -35,6 +37,7 @@ const pageRoles: Record<Page, Role[]> = {
   clinical: ["super_admin", "admin", "doctor", "nurse"],
   invoices: ["super_admin", "admin", "receptionist", "doctor"], reports: ["super_admin", "admin"],
   team: ["super_admin", "admin"], settings: ["super_admin", "admin"],
+  inventory: ["super_admin", "admin", "nurse", "doctor"], bookings: ["super_admin", "admin", "receptionist"], activity: ["super_admin", "admin"],
 };
 
 const titles: Record<Page, [string, string]> = {
@@ -42,6 +45,7 @@ const titles: Record<Page, [string, string]> = {
   appointments: ["الجدول اليومي", "تنظيم المواعيد والكراسي"], clinical: ["العلاجات والوصفات", "متابعة الرعاية السريرية"],
   invoices: ["الفواتير", "المدفوعات والأرصدة"], reports: ["التقارير", "مؤشرات الأداء المالي والتشغيلي"],
   team: ["الفريق والكراسي", "إدارة أعضاء الفريق ومساحات العمل"], settings: ["إعدادات العيادة", "الهوية وبيانات التواصل"],
+  inventory: ["المخزون", "المواد والمستلزمات وحركتها"], bookings: ["طلبات الحجز", "طلبات المواعيد الواردة من الصفحة العامة"], activity: ["سجل النشاط", "من أضاف أو عدّل أو حذف، ومتى"],
 };
 
 async function loadClinic() {
@@ -89,7 +93,7 @@ export function ClinicApp({ page }: { page: Page }) {
     </aside>
     <main className="app-main">
       <header className="topbar"><Button className="menu-button" variant="ghost" size="icon" onClick={() => setMenu(true)}><Menu /></Button><div className="global-search"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث سريع..." /></div><span className="today">{new Intl.DateTimeFormat("ar-SY", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span><Button type="button" variant="outline" size="sm" onClick={switchTheme} title="تبديل نمط الواجهة"><Palette /> {theme==="classic"?"النمط الثاني":theme==="alt"?"النمط الثالث":"النمط الأول"}</Button><div className="topbar-user"><div className="topbar-identity"><strong>{me?.full_name ?? "مستخدم العيادة"}</strong><span>{myRoles[0] ? roleLabel(myRoles[0]) : ""}</span></div><div className="avatar avatar-coral">{me?.full_name?.slice(0, 1) ?? "م"}</div></div></header>
-      <div className="page-wrap"><PageHeading title={title[0]} subtitle={title[1]} action={page === "dashboard" ? <Link to="/appointments" className="heading-action"><CalendarDays /> فتح جدول المواعيد</Link> : page !== "reports" && !(page === "invoices" && !myRoles.some((r) => ["super_admin", "admin", "receptionist"].includes(r))) ? <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus /> إضافة جديد</Button></DialogTrigger><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>إضافة {title[0]}</DialogTitle></DialogHeader><CreateForm page={page} data={data ?? undefined} done={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clinic"] }); qc.invalidateQueries({ queryKey: ["occupancy"] }); }} /></DialogContent></Dialog> : undefined} />
+      <div className="page-wrap"><PageHeading title={title[0]} subtitle={title[1]} action={page === "dashboard" ? <Link to="/appointments" className="heading-action"><CalendarDays /> فتح جدول المواعيد</Link> : page !== "reports" && page !== "activity" && page !== "bookings" && !(page === "inventory" && !myRoles.some((r) => ["super_admin", "admin"].includes(r))) && !(page === "invoices" && !myRoles.some((r) => ["super_admin", "admin", "receptionist"].includes(r))) ? <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus /> إضافة جديد</Button></DialogTrigger><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>إضافة {title[0]}</DialogTitle></DialogHeader><CreateForm page={page} data={data ?? undefined} done={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clinic"] }); qc.invalidateQueries({ queryKey: ["occupancy"] }); qc.invalidateQueries({ queryKey: ["inventory"] }); }} /></DialogContent></Dialog> : undefined} />
       {isLoading || !data || !bootstrapped ? <Loading /> : error ? <Empty title="تعذر تحميل البيانات" text="تحقق من اتصالك ثم أعد المحاولة." /> : !allowed ? <div className="panel empty-state"><ShieldAlert/><h3>ليس لديك صلاحية لهذه الصفحة</h3><p>تواصل مع مدير العيادة إذا كنت تحتاج إلى الوصول.</p></div> : <PageBody page={page} data={data} search={search} myRoles={myRoles} myId={userId} />}</div>
     </main>
   </div>;
@@ -108,6 +112,9 @@ function PageBody({ page, data, search, myRoles, myId }: { page: Page; data: Awa
   if (page === "invoices") return <Invoices data={data} myRoles={myRoles} />;
   if (page === "reports") return <Reports data={data} />;
   if (page === "team") return <Team data={data} myId={myId} />;
+  if (page === "inventory") return <Inventory data={data} myRoles={myRoles} />;
+  if (page === "bookings") return <BookingRequests data={data} myId={myId} myRoles={myRoles} />;
+  if (page === "activity") return <ActivityLog data={data} />;
   return <SettingsPage data={data} />;
 }
 
@@ -157,17 +164,17 @@ function Patients({ data, search, myRoles }: { data: Awaited<ReturnType<typeof l
         })}
       </tbody></table> : <Empty title="لا يوجد مرضى بعد" text="أضف أول ملف مريض للبدء." />}
     </section>
-    <Dialog open={!!view} onOpenChange={(open) => !open && setView(null)}><DialogContent dir="rtl" className="modal-card modal-wide"><DialogHeader><DialogTitle>الملف الطبي — {view?.full_name}</DialogTitle></DialogHeader>{view && <PatientProfile patient={view} data={data} />}</DialogContent></Dialog>
+    <Dialog open={!!view} onOpenChange={(open) => !open && setView(null)}><DialogContent dir="rtl" className="modal-card modal-wide"><DialogHeader><DialogTitle>الملف الطبي — {view?.full_name}</DialogTitle></DialogHeader>{view && <PatientProfile patient={view} data={data} canFiles={clinical} isAdmin={myRoles.some((role) => ["super_admin", "admin"].includes(role))} />}</DialogContent></Dialog>
     <Dialog open={!!edit} onOpenChange={(open) => !open && setEdit(null)}><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>تعديل ملف {edit?.full_name}</DialogTitle></DialogHeader>{edit && <PatientEditForm patient={edit} done={() => { setEdit(null); qc.invalidateQueries({ queryKey: ["clinic"] }); }} />}</DialogContent></Dialog>
     <Dialog open={!!dental} onOpenChange={(open) => !open && setDental(null)}><DialogContent dir="rtl" className="modal-card modal-wide"><DialogHeader><DialogTitle>مخطط أسنان {dental?.full_name}</DialogTitle></DialogHeader>{dental && <DentalChart patient={dental} entries={data.dentalChart} canEdit={clinical} />}</DialogContent></Dialog>
   </>;
 }
 
-type PatientTab = "treatments" | "prescriptions" | "invoices" | "teeth";
+type PatientTab = "treatments" | "prescriptions" | "invoices" | "teeth" | "files";
 const methodLabel = (m: string) => ({ cash: "نقداً", card: "بطاقة", transfer: "تحويل" } as Record<string, string>)[m] ?? m;
 const fmtDay = (v?: string | null) => (v ? new Date(v).toLocaleDateString("ar-SY") : "—");
 
-function PatientProfile({ patient, data }: { patient: AnyRow; data: Awaited<ReturnType<typeof loadClinic>> }) {
+function PatientProfile({ patient, data, canFiles = false, isAdmin = false }: { patient: AnyRow; data: Awaited<ReturnType<typeof loadClinic>>; canFiles?: boolean; isAdmin?: boolean }) {
   const [tab, setTab] = useState<PatientTab>("treatments");
   const [toothFilter, setToothFilter] = useState("");
   const pid = patient["id"];
@@ -183,13 +190,13 @@ function PatientProfile({ patient, data }: { patient: AnyRow; data: Awaited<Retu
   chart.forEach((d) => { if (!latestByTooth.has(d.tooth_number)) latestByTooth.set(d.tooth_number, d); });
   const teeth = [...latestByTooth.values()].sort((a, b) => a.tooth_number - b.tooth_number);
   const shownTreatments = toothFilter.trim() ? treatments.filter((t) => String(t.tooth_numbers ?? "").includes(toothFilter.trim())) : treatments;
-  const tabs: [PatientTab, string, number][] = [["treatments", "العلاجات", treatments.length], ["prescriptions", "الوصفات", prescriptions.length], ["invoices", "الفواتير والدفعات", invoices.length], ["teeth", "حالة الأسنان", teeth.length]];
+  const tabs: [PatientTab, string, number][] = [["treatments", "العلاجات", treatments.length], ["prescriptions", "الوصفات", prescriptions.length], ["invoices", "الفواتير والدفعات", invoices.length], ["teeth", "حالة الأسنان", teeth.length], ...(canFiles ? [["files", "الملفات", -1] as [PatientTab, string, number]] : [])];
   const wide = { minWidth: 520 } as React.CSSProperties;
   return <div className="patient-profile">
     <div className="patient-identity"><div className="avatar avatar-lg">{String(patient["full_name"]).slice(0, 1)}</div><div><h2>{patient["full_name"]}</h2><span>ملف رقم {patient["file_number"] || "—"}</span></div></div>
     <div className="detail-grid"><Detail label="الهاتف" value={patient["phone"]} /><Detail label="تاريخ الميلاد" value={patient["date_of_birth"]} /><Detail label="الحساسية" value={patient["allergies"]} /><Detail label="الأمراض المزمنة" value={patient["chronic_diseases"]} /><Detail label="العمليات السابقة" value={patient["surgeries"]} /><Detail label="ملاحظات" value={patient["medical_notes"]} /></div>
     <div className="detail-grid"><Detail label="إجمالي الفواتير" value={money(billed)} /><Detail label="المدفوع" value={money(paid)} /><Detail label="المتبقي على المريض" value={remaining > 0 ? money(remaining) : "مسدد بالكامل"} /></div>
-    <div role="tablist" style={{ marginTop: 6 }}>{tabs.map(([id, label, count]) => <button key={id} type="button" role="tab" data-state={tab === id ? "active" : "inactive"} onClick={() => setTab(id)}>{label} ({count})</button>)}</div>
+    <div role="tablist" style={{ marginTop: 6 }}>{tabs.map(([id, label, count]) => <button key={id} type="button" role="tab" data-state={tab === id ? "active" : "inactive"} onClick={() => setTab(id)}>{label}{count >= 0 ? ` (${count})` : ""}</button>)}</div>
     {tab === "treatments" && <div>
       <label className="form-stack" style={{ margin: "10px 0" }}><span style={{ fontSize: 12, fontWeight: 600 }}>تصفية برقم السن</span><Input value={toothFilter} onChange={(e) => setToothFilter(e.target.value)} placeholder="مثال: 16" style={{ maxWidth: 160 }} /></label>
       {shownTreatments.length ? <div className="table-panel"><table style={wide}><thead><tr><th>التاريخ</th><th>السن</th><th>العلاج</th><th>الطبيب</th><th>التكلفة</th></tr></thead><tbody>{shownTreatments.map((t) => <tr key={t.id}><td>{fmtDay(t.treated_at)}</td><td>{t.tooth_numbers || "—"}</td><td>{t.title}{t.diagnosis ? <small style={{ display: "block", color: "var(--muted-foreground)" }}>{t.diagnosis}</small> : null}</td><td>{docName(t.doctor_id)}</td><td>{money(t.cost)}</td></tr>)}<tr><td colSpan={4}><strong>مجموع العلاجات</strong></td><td><strong>{money(shownTreatments.reduce((s, t) => s + Number(t.cost), 0))}</strong></td></tr></tbody></table></div> : <Empty title="لا توجد علاجات" text={toothFilter ? "لا نتائج لهذا السن." : "لم تُسجَّل علاجات لهذا المريض بعد."} />}
@@ -200,6 +207,7 @@ function PatientProfile({ patient, data }: { patient: AnyRow; data: Awaited<Retu
       <div className="detail-grid"><Detail label="الإجمالي" value={money(i.total)} /><Detail label="الحسم" value={Number(i.discount) ? money(i.discount) : "—"} /><Detail label="المدفوع" value={money(i.paid)} /><Detail label="المتبقي" value={rest > 0 ? money(rest) : "مسدد"} /></div>
       {pays.length ? <div style={{ marginTop: 8 }}>{pays.map((py) => <div className="list-row" key={py.id}><div><strong>{money(py.amount)}</strong><span>{methodLabel(py.method)} · {new Date(py.paid_at).toLocaleString("ar-SY")}</span></div></div>)}</div> : <small style={{ color: "var(--muted-foreground)" }}>لا توجد دفعات على هذه الفاتورة.</small>}
     </div>; })}</div> : <Empty title="لا توجد فواتير" text="لا فواتير مسجلة لهذا المريض، أو أن دورك لا يتيح رؤيتها." />)}
+    {tab === "files" && canFiles && <PatientFiles patientId={pid} isAdmin={isAdmin} />}
     {tab === "teeth" && (teeth.length ? <div className="table-panel"><table style={wide}><thead><tr><th>السن (FDI)</th><th>آخر حالة</th><th>الإجراء</th><th>التاريخ</th></tr></thead><tbody>{teeth.map((d) => <tr key={d.id}><td><strong>{d.tooth_number}</strong></td><td>{d.condition}</td><td>{d.treatment || "—"}</td><td>{fmtDay(d.created_at)}</td></tr>)}</tbody></table></div> : <Empty title="لا توجد سجلات أسنان" text="سجّل حالة الأسنان من زر «الأسنان» في قائمة المرضى." />)}
   </div>;
 }
@@ -281,6 +289,7 @@ function CreateForm({ page, data, done }: { page: Page; data: Awaited<ReturnType
     else if(page==='clinical'){const kind=String(f.get('kind')); if(kind==='prescription')({error}=await supabase.from('prescriptions').insert({patient_id:String(f.get('patientId')),doctor_id:user.id,medication:String(f.get('title')),dosage:String(f.get('details'))})); else if(kind==='dental')({error}=await supabase.from('dental_chart_entries').insert({patient_id:String(f.get('patientId')),tooth_number:Number(f.get('toothNumber')),condition:String(f.get('title')),treatment:String(f.get('details'))||null,recorded_by:user.id})); else ({error}=await supabase.from('treatments').insert({patient_id:String(f.get('patientId')),doctor_id:user.id,title:String(f.get('title')),tooth_numbers:String(f.get('details')),cost:Number(f.get('cost')||0)}));}
     else if(page==='invoices'){const kind=String(f.get('kind')); if(kind==='payment'){({error}=await sb.rpc('record_payment',{_invoice_id:String(f.get('invoiceId')),_amount:Number(f.get('amount')||0),_method:String(f.get('method'))}));} else {({error}=await sb.rpc('create_invoice',{_patient_id:String(f.get('patientId')),_doctor_id:String(f.get('doctorId'))||null,_subtotal:Number(f.get('subtotal')||0),_discount_kind:String(f.get('discountKind')),_discount_value:Number(f.get('discountValue')||0),_notes:null}));}}
     else if(page==='team'){try{const created=await createUser({data:{email:String(f.get('email')),password:String(f.get('password')),fullName:String(f.get('fullName')),phone:String(f.get('phone')),specialty:String(f.get('specialty')),role:String(f.get('role')) as 'doctor'}});const pct=Number(f.get('doctorPercent')||0);if(created?.id&&String(f.get('role'))==='doctor'&&pct>0){const r=await sb.from('doctor_shares').upsert({doctor_id:created.id,percent:pct});if(r.error)error=r.error;}}catch(e){error=e;}}
+    else if(page==='inventory'){const qty=Math.max(0,Number(f.get('quantity')||0)); const ins=await sb.from('inventory_items').insert({name:String(f.get('name')).trim(),unit:String(f.get('unit')||'قطعة').trim()||'قطعة',min_quantity:Math.max(0,Number(f.get('minQuantity')||0)),unit_cost:Math.max(0,Number(f.get('unitCost')||0))}).select('id').single(); error=ins.error; if(!error&&qty>0){const mv=await sb.from('inventory_movements').insert({item_id:ins.data.id,kind:'in',quantity:qty,note:'رصيد افتتاحي',created_by:user.id}); error=mv.error;}}
     else if(page==='settings'){({error}=await supabase.from('chairs').insert({name:String(f.get('name')),color:String(f.get('color'))}));}
     if(error){setMessage(error instanceof Error?error.message:String((error as AnyRow)?.["message"]??error));return;} done();}
   return <form className="form-stack" onSubmit={submit}>
@@ -289,6 +298,7 @@ function CreateForm({ page, data, done }: { page: Page; data: Awaited<ReturnType
     {page==='clinical'&&<><PatientSelect data={data}/><label>نوع السجل<select name="kind"><option value="treatment">علاج</option><option value="prescription">وصفة</option><option value="dental">سجل سن</option></select></label>{(data?.prices ?? []).some((x:AnyRow)=>x.is_active)&&<label>من قائمة الأسعار (اختياري)<select defaultValue="" onChange={(e)=>{const f=e.currentTarget.form; const pr=data?.prices.find((x:AnyRow)=>x.id===e.currentTarget.value); if(f&&pr){(f.elements.namedItem("title") as HTMLInputElement).value=pr.name;(f.elements.namedItem("cost") as HTMLInputElement).value=String(pr.default_price);}}}><option value="">اختر علاجاً</option>{data?.prices.filter((x:AnyRow)=>x.is_active).map((x:AnyRow)=><option key={x.id} value={x.id}>{x.name} — {money(x.default_price)}</option>)}</select></label>}<label>العلاج أو الدواء أو الحالة<Input name="title" required/></label><label>الأسنان أو الجرعة أو الإجراء<Input name="details"/></label><label>رقم السن (لسجل الأسنان)<Input name="toothNumber" type="number" min="11" max="85"/></label><label>التكلفة<Input name="cost" type="number" min="0"/></label></>}
     {page==='invoices'&&<><label>نوع العملية<select name="kind"><option value="invoice">فاتورة جديدة</option><option value="payment">تسجيل دفعة</option></select></label><PatientSelect data={data}/><label>الفاتورة (عند تسجيل دفعة)<select name="invoiceId"><option value="">اختر الفاتورة</option>{data?.invoices.map(i=><option key={i.id} value={i.id}>{i.invoice_number}</option>)}</select></label><InvoiceFields data={data}/><label>مبلغ الدفعة<Input name="amount" type="number" min="1"/></label><label>طريقة الدفع<select name="method"><option value="cash">نقداً</option><option value="card">بطاقة</option><option value="transfer">تحويل</option></select></label></>}
     {page==='team'&&<><label>الاسم الكامل<Input name="fullName" required/></label><label>البريد<Input name="email" type="email" required/></label><label>كلمة مرور مؤقتة<Input name="password" type="password" minLength={8} required/></label><label>الهاتف<Input name="phone"/></label><label>التخصص<Input name="specialty"/></label><label>الدور<select name="role"><option value="doctor">طبيب</option><option value="nurse">ممرض</option><option value="receptionist">استقبال</option><option value="admin">مدير</option></select></label><label>نسبة الطبيب % (للأطباء فقط)<Input name="doctorPercent" type="number" min="0" max="100" step="0.5" defaultValue="0"/></label></>}
+    {page==='inventory'&&<><label>اسم المادة<Input name="name" required maxLength={120}/></label><div className="form-grid"><label>الوحدة<Input name="unit" defaultValue="قطعة" maxLength={30}/></label><label>الكمية الافتتاحية<Input name="quantity" type="number" min="0" step="0.01" defaultValue="0"/></label></div><div className="form-grid"><label>حد التنبيه الأدنى<Input name="minQuantity" type="number" min="0" step="0.01" defaultValue="0"/></label><label>تكلفة الوحدة<Input name="unitCost" type="number" min="0" step="0.01" defaultValue="0"/></label></div></>}
     {page==='settings'&&<><label>اسم الكرسي<Input name="name" required/></label><label>لون الكرسي<Input name="color" type="color" defaultValue="#287f7b"/></label></>}
     {message&&<div className="form-message">{message}</div>}<Button size="lg">حفظ</Button>
   </form>;
@@ -365,6 +375,179 @@ function FinanceReport({ admin }: { admin: boolean }) {
       <table><thead><tr>{admin && <th>الطبيب</th>}<th>الإيراد المحصّل</th><th>{admin ? "حصة الطبيب" : "حصتي"}</th>{admin && <th>حصة العيادة</th>}{admin && <th>حصة المواد</th>}</tr></thead>
         <tbody>{(rows ?? []).map((r) => <tr key={r.doctor_id}>{admin && <td>{r.doctor_name}</td>}<td>{money(r.revenue)}</td><td>{money(r.doctor_share)}</td>{admin && <td>{money(r.clinic_share)}</td>}{admin && <td>{money(r.materials_share)}</td>}</tr>)}
           {admin && <tr><td><strong>المجموع</strong></td><td><strong>{money(sum("revenue"))}</strong></td><td><strong>{money(sum("doctor_share"))}</strong></td><td><strong>{money(sum("clinic_share"))}</strong></td><td><strong>{money(sum("materials_share"))}</strong></td></tr>}</tbody></table>}
+  </div>;
+}
+
+const auditTables: Record<string, string> = { patients: "المرضى", appointments: "المواعيد", invoices: "الفواتير", payments: "الدفعات", treatments: "العلاجات", prescriptions: "الوصفات", dental_chart_entries: "سجل الأسنان", profiles: "الفريق", user_roles: "الأدوار", chairs: "الكراسي", clinic_settings: "إعدادات العيادة", treatment_prices: "قائمة الأسعار", doctor_shares: "نسب الأطباء", finance_settings: "نسب العيادة والمواد", patient_files: "ملفات المرضى", inventory_items: "المخزون", inventory_movements: "حركة المخزون", booking_requests: "طلبات الحجز" };
+const auditActions: Record<string, [string, string]> = { INSERT: ["إضافة", "confirmed"], UPDATE: ["تعديل", "in_progress"], DELETE: ["حذف", "cancelled"] };
+const moveKinds: Record<string, string> = { in: "وارد", out: "صرف", adjust: "جرد" };
+const fileKinds: Record<string, string> = { xray: "أشعة", before: "قبل العلاج", after: "بعد العلاج", document: "مستند" };
+const bookingStatuses: Record<string, [string, string]> = { new: ["جديد", "scheduled"], contacted: ["تم الاتصال", "in_progress"], confirmed: ["مؤكد", "confirmed"], declined: ["مرفوض", "cancelled"] };
+const errText = (err: unknown) => (err instanceof Error ? err.message : String((err as AnyRow)?.["message"] ?? err));
+
+/* ===================== ملفات المريض (أشعة وصور) ===================== */
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.size < 600_000) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale); canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext("2d")?.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch { return file; }
+}
+
+function PatientFiles({ patientId, isAdmin }: { patientId: string; isAdmin: boolean }) {
+  const qc = useQueryClient();
+  const [kind, setKind] = useState("xray"); const [note, setNote] = useState(""); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState("");
+  const files = useQuery({
+    queryKey: ["pfiles", patientId],
+    queryFn: async () => {
+      const { data: rows, error } = await sb.from("patient_files").select("*").eq("patient_id", patientId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return await Promise.all(((rows ?? []) as AnyRow[]).map(async (r) => { const sg = await sb.storage.from("patient-files").createSignedUrl(r["storage_path"], 3600); return { ...r, url: (sg.data?.signedUrl ?? null) as string | null }; }));
+    },
+  });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["pfiles", patientId] });
+  async function upload(e: ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget; const picked = input.files?.[0]; if (!picked) return;
+    setBusy(true); setMsg("");
+    try {
+      const { data: { user } } = await supabase.auth.getUser(); if (!user) throw new Error("انتهت الجلسة، سجّل الدخول من جديد");
+      const file = await shrinkImage(picked);
+      const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "bin";
+      const path = `${patientId}/${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("patient-files").upload(path, file, { contentType: file.type, upsert: false });
+      if (up.error) throw up.error;
+      const ins = await sb.from("patient_files").insert({ patient_id: patientId, storage_path: path, file_name: picked.name, kind, note: note.trim() || null, uploaded_by: user.id });
+      if (ins.error) { await supabase.storage.from("patient-files").remove([path]); throw ins.error; }
+      setNote(""); await refresh();
+    } catch (err) { setMsg(errText(err)); } finally { setBusy(false); input.value = ""; }
+  }
+  async function remove(row: AnyRow) {
+    await supabase.storage.from("patient-files").remove([row["storage_path"]]);
+    const { error } = await sb.from("patient_files").delete().eq("id", row["id"]);
+    setMsg(error ? error.message : ""); await refresh();
+  }
+  return <div className="form-stack" style={{ marginTop: 10 }}>
+    <div className="form-grid">
+      <label>نوع الملف<select value={kind} onChange={(e) => setKind(e.target.value)}>{Object.entries(fileKinds).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      <label>ملاحظة (اختياري)<Input value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} /></label>
+    </div>
+    <label>اختر صورة أو ملف PDF (حتى 8 ميغابايت)<Input type="file" accept="image/*,application/pdf" disabled={busy} onChange={upload} /></label>
+    {busy && <div className="form-message">جارٍ الرفع...</div>}
+    {msg && <div className="form-message">{msg}</div>}
+    {files.isLoading ? <Loading /> : files.error ? <Empty title="تعذر تحميل الملفات" text="تأكد من تنفيذ ملف SQL الخاص بالملفات، وأن دورك يتيح رؤيتها." /> : !(files.data ?? []).length ? <Empty title="لا توجد ملفات" text="ارفع أشعة أو صور قبل/بعد العلاج لتظهر هنا." /> :
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
+        {(files.data ?? []).map((r: AnyRow) => { const isImg = /\.(jpe?g|png|webp|gif)$/i.test(String(r["storage_path"])); return <div className="panel" key={r["id"]} style={{ padding: 8 }}>
+          {r["url"] ? <a href={r["url"]} target="_blank" rel="noreferrer">{isImg ? <img src={r["url"]} alt={r["file_name"]} style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8 }} /> : <div style={{ height: 120, display: "grid", placeItems: "center" }}><FileText size={36} /></div>}</a> : <div style={{ height: 120 }} />}
+          <div style={{ fontSize: 12, marginTop: 6 }}><strong>{fileKinds[r["kind"]] ?? r["kind"]}</strong><div>{fmtDay(r["created_at"])}</div>{r["note"] && <div style={{ color: "var(--muted-foreground)" }}>{r["note"]}</div>}</div>
+          {isAdmin && <ConfirmDelete title="حذف الملف" text="سيُحذف الملف نهائياً ولا يمكن استرجاعه." onConfirm={() => remove(r)} />}
+        </div>; })}
+      </div>}
+  </div>;
+}
+
+/* ===================== المخزون ===================== */
+function MovementForm({ item, canStock, done }: { item: AnyRow; canStock: boolean; done: () => void | Promise<void> }) {
+  const [message, setMessage] = useState("");
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); const f = new FormData(e.currentTarget);
+    const { data: { user } } = await supabase.auth.getUser(); if (!user) return;
+    const { error } = await sb.from("inventory_movements").insert({ item_id: item["id"], kind: canStock ? String(f.get("kind")) : "out", quantity: Number(f.get("quantity") || 0), note: String(f.get("note") || "") || null, created_by: user.id });
+    if (error) { setMessage(error.message); return; }
+    await done();
+  }
+  return <form className="form-stack" onSubmit={submit}>
+    <p className="subheading">الكمية الحالية: {Number(item["quantity"])} {item["unit"]}</p>
+    {canStock ? <label>نوع الحركة<select name="kind" defaultValue="in"><option value="in">وارد (إضافة للمخزون)</option><option value="out">صرف (استهلاك)</option><option value="adjust">جرد (ضبط الكمية الفعلية)</option></select></label> : <p className="subheading">ستُسجَّل هذه الحركة كصرف من المخزون.</p>}
+    <label>الكمية<Input name="quantity" type="number" min="0" step="0.01" required /></label>
+    <label>ملاحظة<Input name="note" maxLength={200} /></label>
+    {message && <div className="form-message">{message}</div>}<Button size="lg">حفظ الحركة</Button>
+  </form>;
+}
+
+function Inventory({ data, myRoles }: { data: ClinicData; myRoles: Role[] }) {
+  const qc = useQueryClient();
+  const isAdmin = myRoles.some((r) => ["super_admin", "admin"].includes(r));
+  const canStock = isAdmin || myRoles.includes("nurse");
+  const [move, setMove] = useState<AnyRow | null>(null); const [msg, setMsg] = useState("");
+  const items = useQuery({ queryKey: ["inventory"], queryFn: async () => { const { data: rows, error } = await sb.from("inventory_items").select("*").order("name"); if (error) throw error; return (rows ?? []) as AnyRow[]; } });
+  const moves = useQuery({ queryKey: ["inventory-moves"], queryFn: async () => { const { data: rows, error } = await sb.from("inventory_movements").select("*, inventory_items(name, unit)").order("created_at", { ascending: false }).limit(60); if (error) throw error; return (rows ?? []) as AnyRow[]; } });
+  const refresh = async () => { await Promise.all([qc.invalidateQueries({ queryKey: ["inventory"] }), qc.invalidateQueries({ queryKey: ["inventory-moves"] })]); };
+  async function patch(id: string, values: AnyRow) { const { error } = await sb.from("inventory_items").update(values).eq("id", id); setMsg(error ? error.message : ""); await refresh(); }
+  const who = (id?: string | null) => data.profiles.find((p) => p.id === id)?.full_name ?? "—";
+  if (items.isLoading) return <Loading />;
+  if (items.error) return <Empty title="تعذر تحميل المخزون" text="تأكد من تنفيذ ملف SQL الخاص بالمخزون ثم أعد المحاولة." />;
+  const list = items.data ?? [];
+  const low = list.filter((i) => i["is_active"] && Number(i["quantity"]) <= Number(i["min_quantity"]));
+  const value = list.reduce((s2, i) => s2 + Number(i["quantity"]) * Number(i["unit_cost"]), 0);
+  const state = (i: AnyRow): [string, string] => Number(i["quantity"]) <= 0 ? ["نفد", "cancelled"] : Number(i["quantity"]) <= Number(i["min_quantity"]) ? ["منخفض", "in_progress"] : ["متوفر", "confirmed"];
+  return <>
+    <section className="stat-grid"><Stat icon={<Package />} label="عدد المواد" value={list.length} note="مادة مسجلة" /><Stat icon={<ShieldAlert />} label="تحتاج تزويداً" value={low.length} note="عند الحد الأدنى أو أقل" />{isAdmin && <Stat icon={<CircleDollarSign />} label="قيمة المخزون" value={money(value)} note="الكمية × تكلفة الوحدة" />}</section>
+    {msg && <div className="form-message">{msg}</div>}
+    <div className="panel table-panel">{list.length ? <table><thead><tr><th>المادة</th><th>الكمية</th><th>حد التنبيه</th>{isAdmin && <th>تكلفة الوحدة</th>}<th>الحالة</th><th>إجراءات</th></tr></thead><tbody>{list.map((i) => { const st = state(i); return <tr key={`${i["id"]}-${i["min_quantity"]}-${i["unit_cost"]}`} style={i["is_active"] ? undefined : { opacity: 0.55 }}>
+      <td><strong>{i["name"]}</strong></td><td>{Number(i["quantity"])} {i["unit"]}</td>
+      <td>{isAdmin ? <Input type="number" min="0" step="0.01" defaultValue={i["min_quantity"]} style={{ maxWidth: 100 }} onBlur={(e) => { const v = Number(e.currentTarget.value); if (v !== Number(i["min_quantity"])) patch(i["id"], { min_quantity: v }); }} /> : Number(i["min_quantity"])}</td>
+      {isAdmin && <td><Input type="number" min="0" step="0.01" defaultValue={i["unit_cost"]} style={{ maxWidth: 110 }} onBlur={(e) => { const v = Number(e.currentTarget.value); if (v !== Number(i["unit_cost"])) patch(i["id"], { unit_cost: v }); }} /></td>}
+      <td><span className={`status status-${st[1]}`}>{st[0]}</span></td>
+      <td><div className="row-actions"><Button size="sm" variant="outline" disabled={!i["is_active"]} onClick={() => setMove(i)}>حركة</Button>{isAdmin && <Button size="sm" variant="ghost" onClick={() => patch(i["id"], { is_active: !i["is_active"] })}>{i["is_active"] ? "تعطيل" : "تفعيل"}</Button>}</div></td>
+    </tr>; })}</tbody></table> : <Empty title="لا توجد مواد" text={isAdmin ? "أضف أول مادة من زر «إضافة جديد»." : "لم تُسجَّل مواد بعد."} />}</div>
+    <h2 className="subheading">آخر الحركات</h2>
+    <div className="panel table-panel">{(moves.data ?? []).length ? <table><thead><tr><th>الوقت</th><th>المادة</th><th>النوع</th><th>الكمية</th><th>بواسطة</th><th>ملاحظة</th></tr></thead><tbody>{(moves.data ?? []).map((m) => <tr key={m["id"]}><td>{new Date(m["created_at"]).toLocaleString("ar-SY")}</td><td>{m["inventory_items"]?.name ?? "—"}</td><td>{moveKinds[m["kind"]] ?? m["kind"]}</td><td>{Number(m["quantity"])}</td><td>{who(m["created_by"])}</td><td>{m["note"] || "—"}</td></tr>)}</tbody></table> : <Empty title="لا توجد حركات" text="ستظهر هنا حركات الوارد والصرف والجرد." />}</div>
+    <Dialog open={!!move} onOpenChange={(o) => !o && setMove(null)}><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>حركة مخزون — {move?.["name"]}</DialogTitle></DialogHeader>{move && <MovementForm item={move} canStock={canStock} done={async () => { setMove(null); await refresh(); }} />}</DialogContent></Dialog>
+  </>;
+}
+
+/* ===================== طلبات الحجز من الصفحة العامة ===================== */
+function BookingRequests({ data, myId, myRoles }: { data: ClinicData; myId?: string | undefined; myRoles: Role[] }) {
+  const qc = useQueryClient(); const [msg, setMsg] = useState("");
+  const isAdmin = myRoles.some((r) => ["super_admin", "admin"].includes(r));
+  const q = useQuery({ queryKey: ["bookings"], queryFn: async () => { const { data: rows, error } = await sb.from("booking_requests").select("*").order("created_at", { ascending: false }).limit(200); if (error) throw error; return (rows ?? []) as AnyRow[]; } });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["bookings"] });
+  const digits = (v?: string | null) => String(v ?? "").replace(/\D/g, "");
+  const hasPatient = (phone: string) => data.patients.some((p) => digits(p.phone) && digits(p.phone) === digits(phone));
+  async function setStatus(id: string, status: string) { const { error } = await sb.from("booking_requests").update({ status, handled_by: myId ?? null }).eq("id", id); setMsg(error ? error.message : ""); await refresh(); }
+  async function makePatient(r: AnyRow) {
+    const { data: { user } } = await supabase.auth.getUser(); if (!user) return;
+    const { error } = await sb.from("patients").insert({ full_name: r["full_name"], phone: r["phone"], created_by: user.id });
+    setMsg(error ? error.message : "تم إنشاء ملف المريض، احجز موعده الآن من «الجدول اليومي»."); await qc.invalidateQueries({ queryKey: ["clinic"] });
+  }
+  async function remove(id: string) { const { error } = await sb.from("booking_requests").delete().eq("id", id); setMsg(error ? error.message : ""); await refresh(); }
+  if (q.isLoading) return <Loading />;
+  if (q.error) return <Empty title="تعذر تحميل الطلبات" text="تأكد من تنفيذ ملف SQL الخاص بطلبات الحجز ثم أعد المحاولة." />;
+  const rows = q.data ?? [];
+  return <>
+    <section className="stat-grid"><Stat icon={<Inbox />} label="طلبات جديدة" value={rows.filter((r) => r["status"] === "new").length} note="تنتظر الاتصال" /><Stat icon={<CalendarDays />} label="مؤكدة" value={rows.filter((r) => r["status"] === "confirmed").length} note="تم تأكيد موعدها" /></section>
+    {msg && <div className="form-message">{msg}</div>}
+    {rows.length ? <div className="form-stack">{rows.map((r) => { const st = bookingStatuses[r["status"]] ?? [r["status"], "scheduled"]; const wa = whatsappLink(r["phone"], `مرحباً ${r["full_name"]}، معك Alteesh Clinic بخصوص طلب موعدك.`); return <div className="panel" key={r["id"]} style={{ padding: 14 }}>
+      <div className="record-row" style={{ borderTop: 0, paddingTop: 0 }}><div><strong>{r["full_name"]}</strong><span dir="ltr" style={{ textAlign: "right" }}>{r["phone"]}</span></div><span className={`status status-${st[1]}`}>{st[0]}</span></div>
+      <div className="detail-grid"><Detail label="التاريخ المفضل" value={r["preferred_date"] ? fmtDay(r["preferred_date"]) : null} /><Detail label="الفترة" value={r["preferred_time"]} /><Detail label="سبب الزيارة" value={r["reason"]} /><Detail label="وصل الطلب" value={new Date(r["created_at"]).toLocaleString("ar-SY")} /></div>
+      <div className="row-actions" style={{ marginTop: 10, flexWrap: "wrap" }}>
+        <Button size="sm" variant="outline" asChild><a href={`tel:${r["phone"]}`}>اتصال</a></Button>
+        {wa && <Button size="sm" variant="outline" asChild><a href={wa} target="_blank" rel="noreferrer"><MessageCircle /> واتساب</a></Button>}
+        {r["status"] !== "contacted" && <Button size="sm" variant="ghost" onClick={() => setStatus(r["id"], "contacted")}>تم الاتصال</Button>}
+        {r["status"] !== "confirmed" && <Button size="sm" variant="ghost" onClick={() => setStatus(r["id"], "confirmed")}>تأكيد</Button>}
+        {r["status"] !== "declined" && <Button size="sm" variant="ghost" onClick={() => setStatus(r["id"], "declined")}>رفض</Button>}
+        {hasPatient(r["phone"]) ? <small style={{ color: "var(--muted-foreground)" }}>له ملف في النظام</small> : <Button size="sm" onClick={() => makePatient(r)}>إنشاء ملف مريض</Button>}
+        {isAdmin && <ConfirmDelete title="حذف الطلب" text="سيُحذف هذا الطلب نهائياً." onConfirm={() => remove(r["id"])} />}
+      </div>
+    </div>; })}</div> : <Empty title="لا توجد طلبات" text="ستظهر هنا الطلبات التي يرسلها الزوار من الصفحة العامة." />}
+  </>;
+}
+
+/* ===================== سجل النشاط ===================== */
+function ActivityLog({ data }: { data: ClinicData }) {
+  const [table, setTable] = useState("");
+  const q = useQuery({ queryKey: ["audit", table], queryFn: async () => { let req = sb.from("audit_log").select("*").order("at", { ascending: false }).limit(150); if (table) req = req.eq("table_name", table); const { data: rows, error } = await req; if (error) throw error; return (rows ?? []) as AnyRow[]; } });
+  const who = (id?: string | null) => (id ? (data.profiles.find((p) => p.id === id)?.full_name ?? "مستخدم محذوف") : "النظام");
+  return <div className="panel table-panel">
+    <div className="form-grid" style={{ marginBottom: 10 }}><label>القسم<select value={table} onChange={(e) => setTable(e.target.value)}><option value="">كل الأقسام</option>{Object.entries(auditTables).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label></div>
+    {q.isLoading ? <Loading /> : q.error ? <Empty title="تعذر تحميل السجل" text="تأكد من تنفيذ ملف SQL الخاص بسجل النشاط ثم أعد المحاولة." /> : !(q.data ?? []).length ? <Empty title="السجل فارغ" text="ستظهر هنا العمليات بعد تنفيذ ملف SQL ومباشرة العمل." /> :
+      <table style={{ minWidth: 640 }}><thead><tr><th>الوقت</th><th>المستخدم</th><th>العملية</th><th>القسم</th><th>التفاصيل</th></tr></thead><tbody>{(q.data ?? []).map((r) => { const a = auditActions[r["action"]] ?? [r["action"], "scheduled"]; return <tr key={r["id"]}><td>{new Date(r["at"]).toLocaleString("ar-SY")}</td><td>{who(r["user_id"])}</td><td><span className={`status status-${a[1]}`}>{a[0]}</span></td><td>{auditTables[r["table_name"]] ?? r["table_name"]}</td><td style={{ maxWidth: 320 }}>{r["summary"] || "—"}</td></tr>; })}</tbody></table>}
   </div>;
 }
 
