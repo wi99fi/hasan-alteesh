@@ -51,6 +51,8 @@ export const createClinicUser = createServerFn({ method: "POST" })
     return { id: created.user.id };
   });
 
+const PROTECTED_MSG = "لا يمكن حذف أو تعديل حساب المدير العام";
+
 export const updateClinicUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
@@ -58,7 +60,7 @@ export const updateClinicUser = createServerFn({ method: "POST" })
     fullName: z.string().trim().min(2).max(120),
     phone: z.string().trim().max(30).optional(),
     specialty: z.string().trim().max(120).optional(),
-    role: roleSchema,
+    role: z.enum(["admin", "doctor", "nurse", "receptionist"]),
   }).parse(data))
   .handler(async ({ data, context }) => {
     const [{ data: superAdmin }, { data: admin }] = await Promise.all([
@@ -67,15 +69,17 @@ export const updateClinicUser = createServerFn({ method: "POST" })
     ]);
     if (!superAdmin && !admin) throw new Error("غير مصرح لك بتعديل المستخدمين");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.rpc("has_role", { _user_id: data.id, _role: "super_admin" });
+    if (target) throw new Error(PROTECTED_MSG);
     const { error: profileError } = await supabaseAdmin.from("profiles").update({
       full_name: data.fullName,
       phone: data.phone || null,
       specialty: data.specialty || null,
       updated_at: new Date().toISOString(),
     }).eq("id", data.id);
-    if (profileError) throw profileError;
+    if (profileError) throw new Error(profileError.message);
     const { error: roleError } = await supabaseAdmin.from("user_roles").update({ role: data.role }).eq("user_id", data.id);
-    if (roleError) throw roleError;
+    if (roleError) throw new Error(roleError.message);
     return { ok: true };
   });
 
@@ -87,11 +91,13 @@ export const deleteClinicUser = createServerFn({ method: "POST" })
     const { data: superAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
     if (!superAdmin) throw new Error("حذف المستخدمين متاح للمدير العام فقط");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.rpc("has_role", { _user_id: data.id, _role: "super_admin" });
+    if (target) throw new Error(PROTECTED_MSG);
     const { error: roleError } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.id);
-    if (roleError) throw roleError;
+    if (roleError) throw new Error(roleError.message);
     const { error: profileError } = await supabaseAdmin.from("profiles").delete().eq("id", data.id);
-    if (profileError) throw profileError;
+    if (profileError) throw new Error(profileError.message);
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(data.id);
-    if (authError) throw authError;
+    if (authError) throw new Error(authError.message);
     return { ok: true };
   });

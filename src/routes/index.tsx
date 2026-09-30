@@ -8,10 +8,10 @@ import hero from "@/assets/clinic-public-hero.jpg";
 export const Route = createFileRoute("/")({
   loader: () => getPublicClinic().catch(() => null),
   head: () => ({ meta: [
-    { title: "عيادة التيش — رعاية أسنان بثقة" },
-    { name: "description", content: "عيادة التيش لطب الأسنان: خدماتنا، ساعات العمل، وطرق التواصل وحجز المواعيد." },
-    { property: "og:title", content: "عيادة التيش — رعاية أسنان بثقة" },
-    { property: "og:description", content: "عيادة التيش لطب الأسنان: خدماتنا، ساعات العمل، وطرق التواصل." },
+    { title: "Alteesh Clinic — رعاية أسنان بثقة" },
+    { name: "description", content: "Alteesh Clinic لطب الأسنان: خدماتنا، ساعات العمل، وطرق التواصل وحجز المواعيد." },
+    { property: "og:title", content: "Alteesh Clinic — رعاية أسنان بثقة" },
+    { property: "og:description", content: "Alteesh Clinic لطب الأسنان: خدماتنا، ساعات العمل، وطرق التواصل." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
   errorComponent: () => <div className="pub-sec">تعذر تحميل الصفحة</div>,
@@ -26,7 +26,7 @@ function lines(v: unknown): string[] {
 
 function PublicHome() {
   const c = Route.useLoaderData() as Record<string, unknown> | null;
-  const name = String(c?.["clinic_name"] ?? "عيادة التيش");
+  const name = String(c?.["clinic_name"] ?? "Alteesh Clinic");
   const services = lines(c?.["public_services"]);
   const hours = lines(c?.["opening_hours"]);
   const phone = c?.["phone"] ? String(c["phone"]) : "";

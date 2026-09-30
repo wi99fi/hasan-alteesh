@@ -584,6 +584,15 @@ export type Database = {
         Args: { _full_name: string }
         Returns: boolean
       }
+      get_chair_occupancy: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          chair_id: string
+          doctor_id: string
+          ends_at: string
+          starts_at: string
+        }[]
+      }
       get_public_clinic_settings: {
         Args: never
         Returns: {
@@ -607,6 +616,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_doctor_patient: {
+        Args: { _patient_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_non_doctor_staff: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

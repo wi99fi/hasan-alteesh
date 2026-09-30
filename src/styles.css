@@ -204,3 +204,19 @@ button, input, textarea, select { font: inherit; }
 .pub-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;line-height:1.8}
 .pub-foot{padding:28px 6vw;border-top:1px solid var(--border);color:var(--muted-foreground);font-size:13px;text-align:center}
 @media(max-width:800px){.pub-hero{grid-template-columns:1fr;padding:36px 6vw}}
+.clinic-shell[data-font="modern"]{--font-display:"IBM Plex Sans Arabic",system-ui,sans-serif}
+.clinic-shell[data-font="formal"]{--font-display:"Libre Baskerville","IBM Plex Sans Arabic",serif}
+.clinic-shell[data-density="compact"] .page-wrap{padding:18px 20px 40px}
+.clinic-shell[data-density="compact"] .panel,.clinic-shell[data-density="compact"] .stat-card{padding:12px}
+.clinic-shell[data-density="compact"] td,.clinic-shell[data-density="compact"] th{padding-block:6px}
+.clinic-shell[data-density="compact"] .list-row,.clinic-shell[data-density="compact"] .record-row,.clinic-shell[data-density="compact"] .appointment-row{padding:7px 0}
+.status-protected{background:color-mix(in oklch,var(--accent) 16%,var(--card));color:var(--accent)}
+.cal-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}.cal-toolbar label{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.cal-legend{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted-foreground)}.cal-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-start:8px}.lg-mine{background:color-mix(in oklch,var(--primary) 18%,var(--card));border:1px solid var(--primary)}.lg-busy{background:var(--muted);border:1px dashed var(--muted-foreground)}
+.cal-scroll{overflow-x:auto}.cal-grid{display:grid;min-width:max-content}
+.cal-head{position:sticky;top:0;padding:10px;font-weight:700;font-size:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;background:var(--card)}
+.cal-hours div{font-size:11px;color:var(--muted-foreground);border-top:1px solid var(--border);padding-top:2px}
+.cal-col{position:relative;border-inline-start:1px solid var(--border)}.cal-slot{position:absolute;inset-inline:0;border-top:1px solid var(--border)}
+.cal-event{position:absolute;inset-inline:4px;overflow:hidden;background:color-mix(in oklch,var(--primary) 12%,var(--card));border:1px solid color-mix(in oklch,var(--primary) 30%,var(--card));border-inline-start:4px solid var(--primary);border-radius:6px;padding:4px 7px;font-size:11px;display:flex;flex-direction:column;gap:1px}
+.cal-event time{color:var(--primary);font-weight:700}.cal-event span{color:var(--muted-foreground)}.cal-event a{position:absolute;top:4px;inset-inline-end:4px;color:var(--primary)}.cal-event a svg{width:14px;height:14px}
+.cal-busy{background:var(--muted);border:1px dashed var(--muted-foreground);color:var(--muted-foreground);align-items:center;justify-content:center;font-weight:700}

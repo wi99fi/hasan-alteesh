@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [
-    { title: "تعيين كلمة مرور جديدة — عيادة التيش" }, { name: "description", content: "تعيين كلمة مرور جديدة لحساب عيادة التيش." },
-    { property: "og:title", content: "تعيين كلمة مرور جديدة — عيادة التيش" }, { property: "og:description", content: "استعادة الوصول الآمن إلى حسابك." },
+    { title: "تعيين كلمة مرور جديدة — Alteesh Clinic" }, { name: "description", content: "تعيين كلمة مرور جديدة لحساب Alteesh Clinic." },
+    { property: "og:title", content: "تعيين كلمة مرور جديدة — Alteesh Clinic" }, { property: "og:description", content: "استعادة الوصول الآمن إلى حسابك." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ]}), component: ResetPassword,
 });
