@@ -3,9 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { Baby, Clock, HeartPulse, Mail, MapPin, MessageCircle, Phone, ShieldCheck, Smile, Sparkles, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-/* نمط «هوية الشعار»: أزرق سماوي + كحلي + كريمي، بحدود عريضة كرسوم الشعار */
+/* نمط «هوية الشعار»: أزرق سماوي + كحلي + أزرق جليدي فاتح، بحدود عريضة كرسوم الشعار */
 const CSS = `
-.bp,.bp-scope{--n:#0b4768;--s:#66adcd;--c:#fffbd6;--t:#e8f3f9;--ink:#062a40;--mut:#35566b}
+.bp,.bp-scope{--n:#0b4768;--s:#66adcd;--c:#d9ecf6;--t:#f1f8fc;--ink:#062a40;--mut:#35566b}
 .bp{color:var(--ink);background:#fff;color-scheme:light;min-height:100vh;overflow-x:hidden}
 .bp *{box-sizing:border-box}
 .bp h1,.bp h2,.bp h3{font-family:var(--font-display,inherit);color:var(--n);margin:0}
@@ -135,7 +135,6 @@ export function BrandHome(p: BrandProps) {
         <h1>{p.name}</h1>
         <p>{p.description}</p>
         <div className="bp-row">
-          <a className="bp-btn pri" href="#book">اطلب موعداً</a>
           {p.wa && <a className="bp-btn ghost" href={`https://wa.me/${p.wa}`} target="_blank" rel="noreferrer"><MessageCircle />احجز عبر واتساب</a>}
           {p.phone && <a className="bp-btn sec" href={`tel:${p.phone}`}><Phone />اتصل بنا</a>}
         </div>
