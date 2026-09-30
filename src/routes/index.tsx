@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getPublicClinic } from "@/lib/public-clinic.functions";
 import logo from "@/assets/alteesh-clinic-logo.png";
 import hero from "@/assets/clinic-public-hero.jpg";
+import { BrandHome, BrandStyles, Cases } from "@/components/public-brand";
 
 export const Route = createFileRoute("/")({
   loader: () => getPublicClinic().catch(() => null),
@@ -67,7 +68,7 @@ function BookingForm({ services }: { services: string[] }) {
 
 type GalleryItem = { id: string; image_url: string; caption: string | null };
 
-function Gallery() {
+function Gallery({ brand = false }: { brand?: boolean }) {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [open, setOpen] = useState<GalleryItem | null>(null);
   useEffect(() => {
@@ -80,11 +81,11 @@ function Gallery() {
     return () => { alive = false; };
   }, []);
   if (!items.length) return null;
-  return <section className="pub-sec" id="gallery">
+  return <section className={brand ? "bp-sec" : "pub-sec"} id="gallery">
     <h2>معرض الصور</h2>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 12 }}>
       {items.map((it) => <button key={it.id} type="button" onClick={() => setOpen(it)} aria-label={it.caption || "عرض الصورة"} style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", textAlign: "inherit" }}>
-        <img src={it.image_url} alt={it.caption || "صورة من العيادة"} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, display: "block" }} />
+        <img src={it.image_url} alt={it.caption || "صورة من العيادة"} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 12, display: "block", border: brand ? "2.5px solid #0b4768" : undefined }} />
         {it.caption && <small style={{ display: "block", marginTop: 6, color: "var(--muted-foreground)" }}>{it.caption}</small>}
       </button>)}
     </div>
@@ -104,6 +105,21 @@ function PublicHome() {
   const hours = lines(c?.["opening_hours"]);
   const phone = c?.["phone"] ? String(c["phone"]) : "";
   const wa = phone.replace(/\D/g, "").replace(/^0/, "963");
+  const description = String(c?.["public_description"] ?? "") || "رعاية متكاملة لصحة أسنانكم بأحدث التقنيات وفريق طبي متخصص في بيئة مريحة وآمنة.";
+  const shownServices = services.length ? services : ["فحص وتنظيف الأسنان", "حشوات تجميلية", "علاج العصب", "تركيبات وتيجان", "زراعة الأسنان", "طب أسنان الأطفال"];
+  const shownHours = hours.length ? hours : ["السبت – الخميس: 9 صباحاً – 8 مساءً"];
+  const [mode, setMode] = useState<"brand" | "classic">("brand");
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("style");
+      const saved = q || window.localStorage.getItem("pub-style");
+      if (saved === "classic" || saved === "brand") setMode(saved);
+    } catch { /* التخزين غير متاح */ }
+  }, []);
+  function choose(m: "brand" | "classic") { setMode(m); try { window.localStorage.setItem("pub-style", m); } catch { /* تجاهل */ } window.scrollTo({ top: 0 }); }
+  if (mode === "brand") return <BrandHome name={name} logoSrc={c?.["logo_url"] ? String(c["logo_url"]) : logo} heroSrc={c?.["hero_image_url"] ? String(c["hero_image_url"]) : hero}
+    description={description} services={shownServices} hours={shownHours} phone={phone} wa={wa} email={c?.["email"] ? String(c["email"]) : ""} address={c?.["address"] ? String(c["address"]) : ""}
+    booking={<BookingForm services={services} />} gallery={<Gallery brand />} onSwitch={() => choose("classic")} />;
   return <main className="pub" dir="rtl">
     <nav className="pub-nav">
       <Link to="/auth" aria-label={name} style={{ display: "inline-flex", cursor: "pointer" }}><img src={c?.["logo_url"] ? String(c["logo_url"]) : logo} alt={`شعار ${name}`} /></Link>
@@ -121,6 +137,8 @@ function PublicHome() {
       </div>
       <img src={c?.["hero_image_url"] ? String(c["hero_image_url"]) : hero} alt="عيادة الأسنان" />
     </section>
+    <BrandStyles />
+    <Cases classic />
     <Gallery />
     <section className="pub-sec" id="book">
       <h2>اطلب موعداً</h2>
@@ -138,6 +156,6 @@ function PublicHome() {
         {(phone || !!c?.["email"]) && <div className="pub-card"><Mail /> <strong>التواصل</strong>{phone && <div dir="ltr">{phone}</div>}{!!c?.["email"] && <div dir="ltr">{String(c["email"])}</div>}</div>}
       </div>
     </section>
-    <footer className="pub-foot">© {new Date().getFullYear()} {name}</footer>
+    <footer className="pub-foot">© {new Date().getFullYear()} {name} <button type="button" onClick={() => choose("brand")} style={{ marginInlineStart: 10, textDecoration: "underline", background: "none", border: 0, cursor: "pointer", color: "inherit", font: "inherit" }}>عرض نمط الشعار</button></footer>
   </main>;
 }
