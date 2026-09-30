@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
-import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, MessageCircle, Download, Users, X, Eye, Pencil, Trash2, Inbox, Package, History } from "lucide-react";
+import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, MessageCircle, Download, Users, X, Eye, Pencil, Trash2, Inbox, Package, History, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureClinicProfile, createClinicUser, deleteClinicUser, updateClinicUser } from "@/lib/clinic.functions";
 import { Button } from "@/components/ui/button";
@@ -164,7 +164,7 @@ function Patients({ data, search, myRoles }: { data: Awaited<ReturnType<typeof l
         })}
       </tbody></table> : <Empty title="لا يوجد مرضى بعد" text="أضف أول ملف مريض للبدء." />}
     </section>
-    <Dialog open={!!view} onOpenChange={(open) => !open && setView(null)}><DialogContent dir="rtl" className="modal-card modal-wide"><DialogHeader><DialogTitle>الملف الطبي — {view?.full_name}</DialogTitle></DialogHeader>{view && <PatientProfile patient={view} data={data} canFiles={clinical} isAdmin={myRoles.some((role) => ["super_admin", "admin"].includes(role))} />}</DialogContent></Dialog>
+    <Dialog open={!!view} onOpenChange={(open) => !open && setView(null)}><DialogContent dir="rtl" className="modal-card modal-wide" style={{ width: "min(880px, calc(100vw - 12px))", maxHeight: "94dvh", overflowY: "auto", padding: 14 }}><DialogHeader><DialogTitle>الملف الطبي</DialogTitle></DialogHeader>{view && <PatientProfile patient={view} data={data} canFiles={clinical} isAdmin={myRoles.some((role) => ["super_admin", "admin"].includes(role))} />}</DialogContent></Dialog>
     <Dialog open={!!edit} onOpenChange={(open) => !open && setEdit(null)}><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>تعديل ملف {edit?.full_name}</DialogTitle></DialogHeader>{edit && <PatientEditForm patient={edit} done={() => { setEdit(null); qc.invalidateQueries({ queryKey: ["clinic"] }); }} />}</DialogContent></Dialog>
     <Dialog open={!!dental} onOpenChange={(open) => !open && setDental(null)}><DialogContent dir="rtl" className="modal-card modal-wide"><DialogHeader><DialogTitle>مخطط أسنان {dental?.full_name}</DialogTitle></DialogHeader>{dental && <DentalChart patient={dental} entries={data.dentalChart} canEdit={clinical} />}</DialogContent></Dialog>
   </>;
@@ -173,6 +173,16 @@ function Patients({ data, search, myRoles }: { data: Awaited<ReturnType<typeof l
 type PatientTab = "treatments" | "prescriptions" | "invoices" | "teeth" | "files";
 const methodLabel = (m: string) => ({ cash: "نقداً", card: "بطاقة", transfer: "تحويل" } as Record<string, string>)[m] ?? m;
 const fmtDay = (v?: string | null) => (v ? new Date(v).toLocaleDateString("ar-SY") : "—");
+
+const muted = { color: "var(--muted-foreground)" } as React.CSSProperties;
+function RecCard({ children }: { children: ReactNode }) {
+  return <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 12, background: "var(--card)", display: "grid", gap: 6 }}>{children}</div>;
+}
+function Chip({ children, tone = "muted" }: { children: ReactNode; tone?: "muted" | "danger" | "warn" | "ok" }) {
+  const tones = { muted: ["var(--secondary)", "var(--foreground)"], danger: ["#f9e7e5", "#a14d45"], warn: ["#fdf0d8", "#8a5a12"], ok: ["#e3f3ee", "#1f6b57"] } as const;
+  const [bg, fg] = tones[tone];
+  return <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 999, background: bg, color: fg, fontSize: 12, fontWeight: 700 }}>{children}</span>;
+}
 
 function PatientProfile({ patient, data, canFiles = false, isAdmin = false }: { patient: AnyRow; data: Awaited<ReturnType<typeof loadClinic>>; canFiles?: boolean; isAdmin?: boolean }) {
   const [tab, setTab] = useState<PatientTab>("treatments");
@@ -183,32 +193,88 @@ function PatientProfile({ patient, data, canFiles = false, isAdmin = false }: { 
   const prescriptions = data.prescriptions.filter((p) => p.patient_id === pid);
   const invoices = data.invoices.filter((i) => i.patient_id === pid);
   const chart = data.dentalChart.filter((d) => d.patient_id === pid);
-  const billed = invoices.reduce((s, i) => s + Number(i.total), 0);
-  const paid = invoices.reduce((s, i) => s + Number(i.paid), 0);
+  const visits = data.appointments.filter((a) => a.patient_id === pid && a.status !== "cancelled");
+  const now = Date.now();
+  const nextVisit = visits.filter((a) => new Date(a.starts_at).getTime() >= now).sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0];
+  const pastDates = [...treatments.map((t) => new Date(t.treated_at).getTime()), ...visits.filter((a) => new Date(a.starts_at).getTime() < now).map((a) => new Date(a.starts_at).getTime())].filter((n) => Number.isFinite(n));
+  const lastVisit = pastDates.length ? Math.max(...pastDates) : null;
+  const billed = invoices.filter((i) => i.status !== "cancelled").reduce((s, i) => s + Number(i.total), 0);
+  const paid = invoices.filter((i) => i.status !== "cancelled").reduce((s, i) => s + Number(i.paid), 0);
   const remaining = Math.max(0, billed - paid);
   const latestByTooth = new Map<number, AnyRow>();
   chart.forEach((d) => { if (!latestByTooth.has(d.tooth_number)) latestByTooth.set(d.tooth_number, d); });
   const teeth = [...latestByTooth.values()].sort((a, b) => a.tooth_number - b.tooth_number);
   const shownTreatments = toothFilter.trim() ? treatments.filter((t) => String(t.tooth_numbers ?? "").includes(toothFilter.trim())) : treatments;
-  const tabs: [PatientTab, string, number][] = [["treatments", "العلاجات", treatments.length], ["prescriptions", "الوصفات", prescriptions.length], ["invoices", "الفواتير والدفعات", invoices.length], ["teeth", "حالة الأسنان", teeth.length], ...(canFiles ? [["files", "الملفات", -1] as [PatientTab, string, number]] : [])];
-  const wide = { minWidth: 520 } as React.CSSProperties;
-  return <div className="patient-profile">
-    <div className="patient-identity"><div className="avatar avatar-lg">{String(patient["full_name"]).slice(0, 1)}</div><div><h2>{patient["full_name"]}</h2><span>ملف رقم {patient["file_number"] || "—"}</span></div></div>
-    <div className="detail-grid"><Detail label="الهاتف" value={patient["phone"]} /><Detail label="تاريخ الميلاد" value={patient["date_of_birth"]} /><Detail label="الحساسية" value={patient["allergies"]} /><Detail label="الأمراض المزمنة" value={patient["chronic_diseases"]} /><Detail label="العمليات السابقة" value={patient["surgeries"]} /><Detail label="ملاحظات" value={patient["medical_notes"]} /></div>
-    <div className="detail-grid"><Detail label="إجمالي الفواتير" value={money(billed)} /><Detail label="المدفوع" value={money(paid)} /><Detail label="المتبقي على المريض" value={remaining > 0 ? money(remaining) : "مسدد بالكامل"} /></div>
-    <div role="tablist" style={{ marginTop: 6 }}>{tabs.map(([id, label, count]) => <button key={id} type="button" role="tab" data-state={tab === id ? "active" : "inactive"} onClick={() => setTab(id)}>{label}{count >= 0 ? ` (${count})` : ""}</button>)}</div>
-    {tab === "treatments" && <div>
-      <label className="form-stack" style={{ margin: "10px 0" }}><span style={{ fontSize: 12, fontWeight: 600 }}>تصفية برقم السن</span><Input value={toothFilter} onChange={(e) => setToothFilter(e.target.value)} placeholder="مثال: 16" style={{ maxWidth: 160 }} /></label>
-      {shownTreatments.length ? <div className="table-panel"><table style={wide}><thead><tr><th>التاريخ</th><th>السن</th><th>العلاج</th><th>الطبيب</th><th>التكلفة</th></tr></thead><tbody>{shownTreatments.map((t) => <tr key={t.id}><td>{fmtDay(t.treated_at)}</td><td>{t.tooth_numbers || "—"}</td><td>{t.title}{t.diagnosis ? <small style={{ display: "block", color: "var(--muted-foreground)" }}>{t.diagnosis}</small> : null}</td><td>{docName(t.doctor_id)}</td><td>{money(t.cost)}</td></tr>)}<tr><td colSpan={4}><strong>مجموع العلاجات</strong></td><td><strong>{money(shownTreatments.reduce((s, t) => s + Number(t.cost), 0))}</strong></td></tr></tbody></table></div> : <Empty title="لا توجد علاجات" text={toothFilter ? "لا نتائج لهذا السن." : "لم تُسجَّل علاجات لهذا المريض بعد."} />}
+  const age = patient["date_of_birth"] ? Math.floor((now - new Date(patient["date_of_birth"]).getTime()) / 31557600000) : null;
+  const phone = String(patient["phone"] ?? "");
+  const wa = whatsappLink(phone, `مرحباً ${patient["full_name"]}، معك Alteesh Clinic.`);
+  const extra: [string, string][] = ([["تاريخ الميلاد", patient["date_of_birth"]], ["العمليات السابقة", patient["surgeries"]], ["ملاحظات طبية", patient["medical_notes"]]] as [string, string][]).filter(([, v]) => v);
+  const tabs: [PatientTab, string, number][] = [["treatments", "العلاجات", treatments.length], ["teeth", "الأسنان", teeth.length], ["prescriptions", "الوصفات", prescriptions.length], ["invoices", "الفواتير", invoices.length], ...(canFiles ? [["files", "الملفات", -1] as [PatientTab, string, number]] : [])];
+  const tile = (label: string, value: ReactNode, color?: string) => <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "10px 6px", textAlign: "center", background: "var(--card)" }}><div style={{ fontSize: 11, ...muted }}>{label}</div><div style={{ fontWeight: 800, fontSize: 14, marginTop: 4, color }}>{value}</div></div>;
+  const gap = { display: "grid", gap: 10 } as React.CSSProperties;
+  return <div style={{ display: "grid", gap: 14 }}>
+    {/* الترويسة */}
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="avatar avatar-lg" style={{ flex: "none" }}>{String(patient["full_name"]).slice(0, 1)}</div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 19, fontWeight: 800, lineHeight: 1.3 }}>{patient["full_name"]}</div>
+        <div style={{ fontSize: 13, ...muted }}>ملف {patient["file_number"] || "—"}{age !== null && age >= 0 ? ` · ${age} سنة` : ""}</div>
+      </div>
+    </div>
+    {phone && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <Button size="sm" variant="outline" asChild><a href={`tel:${phone}`}><Phone /> <span dir="ltr">{phone}</span></a></Button>
+      {wa && <Button size="sm" variant="outline" asChild><a href={wa} target="_blank" rel="noreferrer"><MessageCircle /> واتساب</a></Button>}
     </div>}
-    {tab === "prescriptions" && (prescriptions.length ? <div className="table-panel"><table style={wide}><thead><tr><th>التاريخ</th><th>الدواء</th><th>الجرعة</th><th>الطبيب</th></tr></thead><tbody>{prescriptions.map((p) => <tr key={p.id}><td>{fmtDay(p.prescribed_at)}</td><td>{p.medication}</td><td>{p.dosage || "—"}{p.instructions ? <small style={{ display: "block", color: "var(--muted-foreground)" }}>{p.instructions}</small> : null}</td><td>{docName(p.doctor_id)}</td></tr>)}</tbody></table></div> : <Empty title="لا توجد وصفات" text="لم تُكتب وصفات لهذا المريض بعد." />)}
-    {tab === "invoices" && (invoices.length ? <div className="form-stack">{invoices.map((i: AnyRow) => { const pays = data.payments.filter((py) => py.invoice_id === i.id); const rest = Math.max(0, Number(i.total) - Number(i.paid)); return <div className="panel" key={i.id} style={{ padding: 14 }}>
-      <div className="record-row" style={{ borderTop: 0, paddingTop: 0 }}><div><strong>{i.invoice_number}</strong><span>{fmtDay(i.issued_at)}{i.doctor_id ? ` · ${docName(i.doctor_id)}` : ""}</span></div><span className={`status status-${i.status}`}>{statusLabel(i.status)}</span></div>
-      <div className="detail-grid"><Detail label="الإجمالي" value={money(i.total)} /><Detail label="الحسم" value={Number(i.discount) ? money(i.discount) : "—"} /><Detail label="المدفوع" value={money(i.paid)} /><Detail label="المتبقي" value={rest > 0 ? money(rest) : "مسدد"} /></div>
-      {pays.length ? <div style={{ marginTop: 8 }}>{pays.map((py) => <div className="list-row" key={py.id}><div><strong>{money(py.amount)}</strong><span>{methodLabel(py.method)} · {new Date(py.paid_at).toLocaleString("ar-SY")}</span></div></div>)}</div> : <small style={{ color: "var(--muted-foreground)" }}>لا توجد دفعات على هذه الفاتورة.</small>}
-    </div>; })}</div> : <Empty title="لا توجد فواتير" text="لا فواتير مسجلة لهذا المريض، أو أن دورك لا يتيح رؤيتها." />)}
+    {/* تحذيرات طبية */}
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+      {patient["allergies"] && <Chip tone="danger">حساسية: {patient["allergies"]}</Chip>}
+      {patient["chronic_diseases"] && <Chip tone="warn">مرض مزمن: {patient["chronic_diseases"]}</Chip>}
+      {!patient["allergies"] && !patient["chronic_diseases"] && <small style={muted}>لم تُسجَّل حساسية أو أمراض مزمنة.</small>}
+    </div>
+    {/* ملخص */}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+      {tile("المتبقي", remaining > 0 ? money(remaining) : "مسدد", remaining > 0 ? "#a14d45" : "#1f6b57")}
+      {tile("آخر زيارة", lastVisit ? fmtDay(new Date(lastVisit).toISOString()) : "—")}
+      {tile("الموعد القادم", nextVisit ? new Date(nextVisit.starts_at).toLocaleDateString("ar-SY", { day: "numeric", month: "short" }) + " · " + new Date(nextVisit.starts_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" }) : "—")}
+    </div>
+    {extra.length > 0 && <details style={{ border: "1px solid var(--border)", borderRadius: 12, padding: "8px 12px", background: "var(--card)" }}>
+      <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 13 }}>بيانات إضافية ({extra.length})</summary>
+      <div style={{ display: "grid", gap: 8, marginTop: 8 }}>{extra.map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 13 }}><span style={muted}>{k}</span><strong style={{ textAlign: "left" }}>{v}</strong></div>)}</div>
+    </details>}
+    {/* التبويبات */}
+    <div role="tablist" style={{ display: "flex", flexWrap: "nowrap", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
+      {tabs.map(([id, label, count]) => <button key={id} type="button" role="tab" data-state={tab === id ? "active" : "inactive"} onClick={() => setTab(id)} style={{ flex: "none", whiteSpace: "nowrap", padding: "8px 14px", borderRadius: 999 }}>{label}{count > 0 ? ` (${count})` : ""}</button>)}
+    </div>
+    {/* المحتوى */}
+    {tab === "treatments" && <div style={gap}>
+      {treatments.length > 4 && <Input value={toothFilter} onChange={(e) => setToothFilter(e.target.value)} placeholder="تصفية برقم السن، مثال: 16" style={{ maxWidth: 240 }} />}
+      {shownTreatments.length ? <>
+        {shownTreatments.map((t) => <RecCard key={t.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><strong>{t.title}</strong><b style={{ whiteSpace: "nowrap" }}>{money(t.cost)}</b></div>
+          {t.diagnosis && <div style={{ fontSize: 12, ...muted }}>{t.diagnosis}</div>}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 12, ...muted }}>{t.tooth_numbers && <Chip>سن {t.tooth_numbers}</Chip>}<span>{fmtDay(t.treated_at)}</span><span>· {docName(t.doctor_id)}</span></div>
+        </RecCard>)}
+        <div style={{ fontWeight: 800, textAlign: "left" }}>مجموع العلاجات: {money(shownTreatments.reduce((s, t) => s + Number(t.cost), 0))}</div>
+      </> : <Empty title="لا توجد علاجات" text={toothFilter ? "لا نتائج لهذا السن." : "لم تُسجَّل علاجات لهذا المريض بعد."} />}
+    </div>}
+    {tab === "teeth" && (teeth.length ? <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
+      {teeth.map((d) => <RecCard key={d.id}><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span className="avatar" style={{ flex: "none" }}>{d.tooth_number}</span><div style={{ minWidth: 0 }}><strong style={{ display: "block" }}>{d.condition}</strong><small style={muted}>{d.treatment || "دون إجراء"}</small></div></div><small style={muted}>{fmtDay(d.created_at)}</small></RecCard>)}
+    </div> : <Empty title="لا توجد سجلات أسنان" text="سجّل حالة الأسنان من زر «الأسنان» في قائمة المرضى." />)}
+    {tab === "prescriptions" && (prescriptions.length ? <div style={gap}>
+      {prescriptions.map((p) => <RecCard key={p.id}><div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><strong>{p.medication}</strong><small style={muted}>{fmtDay(p.prescribed_at)}</small></div>{p.dosage && <div style={{ fontSize: 13 }}>{p.dosage}</div>}{p.instructions && <div style={{ fontSize: 12, ...muted }}>{p.instructions}</div>}<small style={muted}>{docName(p.doctor_id)}</small></RecCard>)}
+    </div> : <Empty title="لا توجد وصفات" text="لم تُكتب وصفات لهذا المريض بعد." />)}
+    {tab === "invoices" && (invoices.length ? <div style={gap}>
+      {invoices.map((i: AnyRow) => { const pays = data.payments.filter((py) => py.invoice_id === i.id); const rest = Math.max(0, Number(i.total) - Number(i.paid)); return <RecCard key={i.id}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}><strong>{i.invoice_number}</strong><span className={`status status-${i.status}`}>{statusLabel(i.status)}</span></div>
+        <small style={muted}>{fmtDay(i.issued_at)}{i.doctor_id ? ` · ${docName(i.doctor_id)}` : ""}</small>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, textAlign: "center", fontSize: 12 }}>
+          <div><div style={muted}>الإجمالي</div><b>{money(i.total)}</b></div><div><div style={muted}>المدفوع</div><b>{money(i.paid)}</b></div><div><div style={muted}>المتبقي</div><b style={{ color: rest > 0 && i.status !== "cancelled" ? "#a14d45" : "#1f6b57" }}>{rest > 0 && i.status !== "cancelled" ? money(rest) : "مسدد"}</b></div>
+        </div>
+        {Number(i.discount) > 0 && <div><Chip tone="ok">حسم {money(i.discount)}</Chip></div>}
+        {pays.length > 0 && <details><summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>الدفعات ({pays.length})</summary><div style={{ display: "grid", gap: 6, marginTop: 6 }}>{pays.map((py) => <div key={py.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}><span>{money(py.amount)} · {methodLabel(py.method)}</span><span style={muted}>{new Date(py.paid_at).toLocaleDateString("ar-SY")}</span></div>)}</div></details>}
+      </RecCard>; })}
+    </div> : <Empty title="لا توجد فواتير" text="لا فواتير مسجلة لهذا المريض، أو أن دورك لا يتيح رؤيتها." />)}
     {tab === "files" && canFiles && <PatientFiles patientId={pid} isAdmin={isAdmin} />}
-    {tab === "teeth" && (teeth.length ? <div className="table-panel"><table style={wide}><thead><tr><th>السن (FDI)</th><th>آخر حالة</th><th>الإجراء</th><th>التاريخ</th></tr></thead><tbody>{teeth.map((d) => <tr key={d.id}><td><strong>{d.tooth_number}</strong></td><td>{d.condition}</td><td>{d.treatment || "—"}</td><td>{fmtDay(d.created_at)}</td></tr>)}</tbody></table></div> : <Empty title="لا توجد سجلات أسنان" text="سجّل حالة الأسنان من زر «الأسنان» في قائمة المرضى." />)}
   </div>;
 }
 function Detail({label,value}:{label:string;value?:string|null}){return <div className="detail-item"><span>{label}</span><strong>{value||"غير مسجل"}</strong></div>}
