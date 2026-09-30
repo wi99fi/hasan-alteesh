@@ -258,3 +258,92 @@ button, input, textarea, select { font: inherit; }
 .modal-card{animation:modal-in .2s ease-out}
 @keyframes modal-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
 @media(max-width:767px){.topbar-identity{display:none}.topbar-user{gap:0}.quick-actions{align-items:flex-start;flex-direction:column;padding:16px}.quick-action-list{width:100%}.quick-action{flex:1;justify-content:center}.heading-action{padding:9px 10px;font-size:12px}}
+
+/* ============================================================
+   النمط الثاني (Alt) — يُفعَّل من زر "النمط الثاني" في الشريط العلوي
+   لا يغيّر النمط الأول؛ يُطبَّق فقط عند وجود data-theme="alt" على <html>
+   ============================================================ */
+:root[data-theme="alt"] {
+  --radius: .8rem;
+  --background: hsl(40 33% 97%); --foreground: hsl(204 31% 19%);
+  --card: hsl(0 0% 100%); --card-foreground: hsl(204 31% 19%);
+  --popover: hsl(0 0% 100%); --popover-foreground: hsl(204 31% 19%);
+  --primary: hsl(184 51% 32%); --primary-foreground: hsl(40 33% 97%);
+  --secondary: hsl(35 41% 91%); --secondary-foreground: hsl(204 31% 24%);
+  --muted: hsl(39 27% 92%); --muted-foreground: hsl(204 12% 49%);
+  --accent: hsl(16 68% 67%); --accent-foreground: hsl(204 31% 19%);
+  --destructive: hsl(2 68% 53%); --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(37 24% 87%); --input: hsl(37 24% 82%); --ring: hsl(184 51% 32%);
+  --alt-shadow: 0 12px 30px rgba(39, 71, 74, .07);
+  --alt-shadow-hover: 0 15px 32px rgba(39, 71, 74, .11);
+}
+:root[data-theme="alt"] ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+:root[data-theme="alt"] * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* الشريط الجانبي */
+:root[data-theme="alt"] .sidebar { padding: 28px 20px 22px; background: var(--card); }
+:root[data-theme="alt"] .brand { padding: 0 4px 28px; margin-bottom: 8px; }
+:root[data-theme="alt"] .nav-link { gap: 12px; min-height: 0; padding: 11px 12px; border: 0; border-radius: 10px; color: var(--muted-foreground); font-weight: 600; transition: all .18s ease; }
+:root[data-theme="alt"] .nav-link:hover { background: var(--secondary); color: var(--foreground); transform: none; }
+:root[data-theme="alt"] .nav-link-active,
+:root[data-theme="alt"] .nav-link-active:hover { background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); border: 0; box-shadow: none; }
+:root[data-theme="alt"] .nav-link-active::before { display: none; }
+:root[data-theme="alt"] .sidebar-note { padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--secondary) 65%, transparent), var(--card)); }
+
+/* الشريط العلوي */
+:root[data-theme="alt"] .topbar { height: 72px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--background) 86%, transparent); backdrop-filter: blur(10px); }
+:root[data-theme="alt"] .page-wrap { max-width: 1440px; padding: 32px 30px 60px; }
+
+/* البطاقات واللوحات */
+:root[data-theme="alt"] .panel,
+:root[data-theme="alt"] .stat-card,
+:root[data-theme="alt"] .team-card,
+:root[data-theme="alt"] .quick-actions { border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: var(--alt-shadow); }
+:root[data-theme="alt"] .quick-actions { background: linear-gradient(105deg, color-mix(in srgb, var(--secondary) 75%, transparent), var(--card)); }
+:root[data-theme="alt"] .stat-card { transition: transform .18s ease, box-shadow .18s ease; }
+:root[data-theme="alt"] .stat-card:hover { transform: translateY(-2px); box-shadow: var(--alt-shadow-hover); }
+:root[data-theme="alt"] .stat-icon { border-radius: 10px; background: color-mix(in srgb, var(--primary) 11%, transparent); color: var(--primary); }
+:root[data-theme="alt"] .stat-card:nth-child(2) .stat-icon { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent-foreground); }
+:root[data-theme="alt"] .stat-card:nth-child(3) .stat-icon { background: #e6edf5; color: #587493; }
+:root[data-theme="alt"] .stat-card:nth-child(4) .stat-icon { background: #f1e8d5; color: #9b7545; }
+:root[data-theme="alt"] .chair-tile { border: 1px solid var(--border); border-radius: 10px; background: color-mix(in srgb, var(--secondary) 35%, transparent); box-shadow: none; }
+:root[data-theme="alt"] .panel-heading { border-bottom: 1px solid var(--border); background: transparent; }
+
+/* الشارات والحالات */
+:root[data-theme="alt"] .status-scheduled,
+:root[data-theme="alt"] .status-draft { background: #f5f1e9; color: #5f625e; }
+:root[data-theme="alt"] .status-confirmed,
+:root[data-theme="alt"] .status-paid { background: color-mix(in srgb, var(--primary) 11%, transparent); color: var(--primary); }
+:root[data-theme="alt"] .status-in_progress,
+:root[data-theme="alt"] .status-partial { background: color-mix(in srgb, var(--accent) 16%, transparent); color: #9c503d; }
+:root[data-theme="alt"] .status-completed { background: #e8eef5; color: #587493; }
+:root[data-theme="alt"] .status-cancelled,
+:root[data-theme="alt"] .status-unpaid { background: #f9e7e5; color: #a14d45; }
+:root[data-theme="alt"] .status-protected { background: color-mix(in srgb, var(--accent) 17%, transparent); color: #a65039; }
+:root[data-theme="alt"] .avatar { background: color-mix(in srgb, var(--primary) 13%, transparent); color: var(--primary); }
+:root[data-theme="alt"] .avatar-coral { background: color-mix(in srgb, var(--accent) 20%, transparent); color: #a65039; }
+
+/* الجداول */
+:root[data-theme="alt"] .table-panel th { background: color-mix(in srgb, var(--secondary) 42%, transparent); color: var(--muted-foreground); font-weight: 700; }
+:root[data-theme="alt"] .table-panel td,
+:root[data-theme="alt"] .table-panel th { border-bottom-color: color-mix(in srgb, var(--border) 72%, transparent); }
+:root[data-theme="alt"] .table-panel tbody tr:hover { background: color-mix(in srgb, var(--secondary) 45%, transparent); }
+
+/* التقويم */
+:root[data-theme="alt"] .cal-head { background: color-mix(in srgb, var(--secondary) 42%, var(--card)); }
+:root[data-theme="alt"] .cal-event { border-radius: 8px; border-inline-start-width: 3px; transition: transform .16s, box-shadow .16s; }
+:root[data-theme="alt"] .cal-event:hover { z-index: 2; transform: translateY(-1px); box-shadow: 0 7px 16px rgba(39, 71, 74, .12); }
+
+/* الحقول والأزرار والنوافذ */
+:root[data-theme="alt"] .form-stack input,
+:root[data-theme="alt"] .form-stack textarea,
+:root[data-theme="alt"] .form-stack select { border: 1px solid var(--input); border-radius: 8px; background: var(--card); transition: box-shadow .18s, border-color .18s; }
+:root[data-theme="alt"] .form-stack input:focus,
+:root[data-theme="alt"] .form-stack textarea:focus,
+:root[data-theme="alt"] .form-stack select:focus { border-color: color-mix(in srgb, var(--primary) 65%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent); }
+:root[data-theme="alt"] .modal-card { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: 0 24px 60px rgba(23, 39, 42, .22); }
+:root[data-theme="alt"] .heading-action { border-radius: 8px; }
+:root[data-theme="alt"] .quick-action { border-radius: 9px; }
+:root[data-theme="alt"] .quick-action:hover { transform: translateY(-1px); }
+:root[data-theme="alt"] .page-heading h1 { font-size: 28px; letter-spacing: -.01em; }
+:root[data-theme="alt"] .eyebrow { letter-spacing: .14em; }
