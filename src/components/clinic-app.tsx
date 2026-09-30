@@ -344,7 +344,7 @@ function TeamEditForm({member,save}:{member:AnyRow;save:(values:{id:string;fullN
 function SettingsPage({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) {
   const qc=useQueryClient(); const [saved,setSaved]=useState("");
   async function save(e:FormEvent<HTMLFormElement>){e.preventDefault(); const f=new FormData(e.currentTarget); const {data:{user}}=await supabase.auth.getUser(); if(!user)return; let logoUrl:string|null=data.settings?.logo_url??null; const file=f.get('logo'); if(file instanceof File&&file.size){const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'png'; const path=`${user.id}/logo-${Date.now()}.${ext}`; const up=await supabase.storage.from('clinic-branding').upload(path,file,{contentType:file.type,upsert:false}); if(up.error){setSaved('تعذر رفع الشعار: '+up.error.message);return;} logoUrl=supabase.storage.from('clinic-branding').getPublicUrl(path).data.publicUrl;} const payload={clinic_name:String(f.get('clinicName')),primary_color:String(f.get('primary')),accent_color:String(f.get('accent')),phone:String(f.get('phone')),email:String(f.get('email')),address:String(f.get('address')),logo_url:logoUrl,font_family:String(f.get('fontFamily')||'formal'),interface_density:String(f.get('density')||'comfortable'),public_description:String(f.get('description')||'')||null,public_services:String(f.get('services')||'')||null,opening_hours:String(f.get('hours')||'')||null,updated_by:user.id,updated_at:new Date().toISOString()}; const res=data.settings?await supabase.from('clinic_settings').update(payload).eq('id',data.settings.id):await supabase.from('clinic_settings').insert(payload); setSaved(res.error?res.error.message:'تم حفظ هوية العيادة بنجاح'); qc.invalidateQueries({queryKey:['clinic']});}
-  return <><form className="settings-grid" onSubmit={save}><section className="panel form-stack"><h2><Palette/> الهوية البصرية</h2><label>اسم العيادة<Input name="clinicName" value="Alteesh Clinic" readOnly/></label><label>الشعار<Input name="logo" type="file" accept="image/png,image/jpeg,image/webp"/></label><div className="color-fields"><label>اللون الأساسي<Input name="primary" type="color" defaultValue={data.settings?.primary_color}/></label><label>اللون المساند<Input name="accent" type="color" defaultValue={data.settings?.accent_color}/></label></div><label>الخط<select name="fontFamily" defaultValue={data.settings?.font_family??"formal"}><option value="formal">رسمي أنيق</option><option value="modern">عصري واضح</option></select></label><label>كثافة الواجهة<select name="density" defaultValue={data.settings?.interface_density??"comfortable"}><option value="comfortable">مريحة</option><option value="compact">مدمجة</option></select></label></section><section className="panel form-stack"><h2>صفحة العرض والتواصل</h2><label>نبذة العيادة<Textarea name="description" maxLength={1000} defaultValue={data.settings?.public_description??''}/></label><label>الخدمات (خدمة في كل سطر)<Textarea name="services" maxLength={1000} defaultValue={data.settings?.public_services??''}/></label><label>ساعات العمل<Input name="hours" maxLength={200} defaultValue={data.settings?.opening_hours??''}/></label><label>الهاتف<Input name="phone" maxLength={30} defaultValue={data.settings?.phone??''}/></label><label>البريد<Input name="email" type="email" maxLength={255} defaultValue={data.settings?.email??''}/></label><label>العنوان<Textarea name="address" maxLength={500} defaultValue={data.settings?.address??''}/></label>{saved&&<div className="form-message">{saved}</div>}<Button size="lg">حفظ التغييرات</Button></section></form><PricesManager data={data} /><FinanceSettings data={data} /></>;
+  return <><form className="settings-grid" onSubmit={save}><section className="panel form-stack"><h2><Palette/> الهوية البصرية</h2><label>اسم العيادة<Input name="clinicName" value="Alteesh Clinic" readOnly/></label><label>الشعار<Input name="logo" type="file" accept="image/png,image/jpeg,image/webp"/></label><div className="color-fields"><label>اللون الأساسي<Input name="primary" type="color" defaultValue={data.settings?.primary_color}/></label><label>اللون المساند<Input name="accent" type="color" defaultValue={data.settings?.accent_color}/></label></div><label>الخط<select name="fontFamily" defaultValue={data.settings?.font_family??"formal"}><option value="formal">رسمي أنيق</option><option value="modern">عصري واضح</option></select></label><label>كثافة الواجهة<select name="density" defaultValue={data.settings?.interface_density??"comfortable"}><option value="comfortable">مريحة</option><option value="compact">مدمجة</option></select></label></section><section className="panel form-stack"><h2>صفحة العرض والتواصل</h2><label>نبذة العيادة<Textarea name="description" maxLength={1000} defaultValue={data.settings?.public_description??''}/></label><label>الخدمات (خدمة في كل سطر)<Textarea name="services" maxLength={1000} defaultValue={data.settings?.public_services??''}/></label><label>ساعات العمل<Input name="hours" maxLength={200} defaultValue={data.settings?.opening_hours??''}/></label><label>الهاتف<Input name="phone" maxLength={30} defaultValue={data.settings?.phone??''}/></label><label>البريد<Input name="email" type="email" maxLength={255} defaultValue={data.settings?.email??''}/></label><label>العنوان<Textarea name="address" maxLength={500} defaultValue={data.settings?.address??''}/></label>{saved&&<div className="form-message">{saved}</div>}<Button size="lg">حفظ التغييرات</Button></section></form><GalleryManager /><PricesManager data={data} /><FinanceSettings data={data} /></>;
 }
 
 function CreateForm({ page, data, done }: { page: Page; data: Awaited<ReturnType<typeof loadClinic>> | undefined; done: () => void }) {
@@ -388,6 +388,57 @@ function InvoiceFields({ data }: { data: Awaited<ReturnType<typeof loadClinic>> 
     </div>
     <p className="subheading">الحسم: {money(discount)} — الإجمالي بعد الحسم: {money(subtotal - discount)}</p>
   </>;
+}
+
+function GalleryManager() {
+  const qc = useQueryClient();
+  const [caption, setCaption] = useState(""); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState("");
+  const list = useQuery({
+    queryKey: ["gallery"],
+    queryFn: async () => { const { data: rows, error } = await sb.from("clinic_gallery").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false }); if (error) throw error; return (rows ?? []) as AnyRow[]; },
+  });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["gallery"] });
+  async function upload(e: ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget; const picked = input.files?.[0]; if (!picked) return;
+    setBusy(true); setMsg("");
+    try {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(picked.type)) throw new Error("الأنواع المسموحة: JPG أو PNG أو WEBP");
+      if ((list.data ?? []).length >= 24) throw new Error("الحد الأقصى 24 صورة، احذف صورة قبل إضافة أخرى");
+      const { data: { user } } = await supabase.auth.getUser(); if (!user) throw new Error("انتهت الجلسة، سجّل الدخول من جديد");
+      const file = await shrinkImage(picked);
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("clinic-gallery").upload(path, file, { contentType: file.type, upsert: false });
+      if (up.error) throw up.error;
+      const url = supabase.storage.from("clinic-gallery").getPublicUrl(path).data.publicUrl;
+      const ins = await sb.from("clinic_gallery").insert({ image_url: url, storage_path: path, caption: caption.trim() || null, created_by: user.id });
+      if (ins.error) { await supabase.storage.from("clinic-gallery").remove([path]); throw ins.error; }
+      setCaption(""); await refresh();
+    } catch (err) { setMsg(errText(err)); } finally { setBusy(false); input.value = ""; }
+  }
+  async function remove(row: AnyRow) {
+    setMsg("");
+    const { error } = await sb.from("clinic_gallery").delete().eq("id", row["id"]);
+    if (error) { setMsg(error.message); return; }
+    await supabase.storage.from("clinic-gallery").remove([row["storage_path"]]);
+    await refresh();
+  }
+  return <section className="panel form-stack" style={{ marginTop: 16 }}>
+    <h2>معرض صور الصفحة العامة</h2>
+    <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>الصور التي تضيفها هنا تظهر للمرضى في الصفحة العامة للعيادة (حتى 24 صورة).</p>
+    <label>وصف الصورة (اختياري)<Input value={caption} maxLength={200} onChange={(e) => setCaption(e.target.value)} /></label>
+    <label>اختر صورة (JPG أو PNG أو WEBP)<Input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={upload} /></label>
+    {busy && <div className="form-message">جارٍ الرفع...</div>}
+    {msg && <div className="form-message">{msg}</div>}
+    {list.isLoading ? <Loading /> : list.error ? <Empty title="تعذر تحميل المعرض" text="تأكد من تنفيذ ملف SQL الخاص بالمعرض (0012)." /> : !(list.data ?? []).length ? <Empty title="لا توجد صور" text="أضف أول صورة لتظهر في الصفحة العامة." /> :
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 12 }}>
+        {(list.data ?? []).map((r: AnyRow) => <div className="panel" key={r["id"]} style={{ padding: 8 }}>
+          <img src={r["image_url"]} alt={r["caption"] || "صورة"} loading="lazy" style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 8 }} />
+          {r["caption"] && <div style={{ fontSize: 12, marginTop: 6 }}>{r["caption"]}</div>}
+          <ConfirmDelete title="حذف الصورة" text="ستُحذف الصورة من المعرض ومن الصفحة العامة نهائياً." onConfirm={() => remove(r)} />
+        </div>)}
+      </div>}
+  </section>;
 }
 
 function PricesManager({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) {
