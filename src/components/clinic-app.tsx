@@ -344,7 +344,7 @@ function TeamEditForm({member,save}:{member:AnyRow;save:(values:{id:string;fullN
 function SettingsPage({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) {
   const qc=useQueryClient(); const [saved,setSaved]=useState("");
   async function save(e:FormEvent<HTMLFormElement>){e.preventDefault(); const f=new FormData(e.currentTarget); const {data:{user}}=await supabase.auth.getUser(); if(!user)return; let logoUrl:string|null=data.settings?.logo_url??null; const file=f.get('logo'); if(file instanceof File&&file.size){const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'png'; const path=`${user.id}/logo-${Date.now()}.${ext}`; const up=await supabase.storage.from('clinic-branding').upload(path,file,{contentType:file.type,upsert:false}); if(up.error){setSaved('تعذر رفع الشعار: '+up.error.message);return;} logoUrl=supabase.storage.from('clinic-branding').getPublicUrl(path).data.publicUrl;} const payload={clinic_name:String(f.get('clinicName')),primary_color:String(f.get('primary')),accent_color:String(f.get('accent')),phone:String(f.get('phone')),email:String(f.get('email')),address:String(f.get('address')),logo_url:logoUrl,font_family:String(f.get('fontFamily')||'formal'),interface_density:String(f.get('density')||'comfortable'),public_description:String(f.get('description')||'')||null,public_services:String(f.get('services')||'')||null,opening_hours:String(f.get('hours')||'')||null,updated_by:user.id,updated_at:new Date().toISOString()}; const res=data.settings?await supabase.from('clinic_settings').update(payload).eq('id',data.settings.id):await supabase.from('clinic_settings').insert(payload); setSaved(res.error?res.error.message:'تم حفظ هوية العيادة بنجاح'); qc.invalidateQueries({queryKey:['clinic']});}
-  return <><form className="settings-grid" onSubmit={save}><section className="panel form-stack"><h2><Palette/> الهوية البصرية</h2><label>اسم العيادة<Input name="clinicName" value="Alteesh Clinic" readOnly/></label><label>الشعار<Input name="logo" type="file" accept="image/png,image/jpeg,image/webp"/></label><div className="color-fields"><label>اللون الأساسي<Input name="primary" type="color" defaultValue={data.settings?.primary_color}/></label><label>اللون المساند<Input name="accent" type="color" defaultValue={data.settings?.accent_color}/></label></div><label>الخط<select name="fontFamily" defaultValue={data.settings?.font_family??"formal"}><option value="formal">رسمي أنيق</option><option value="modern">عصري واضح</option></select></label><label>كثافة الواجهة<select name="density" defaultValue={data.settings?.interface_density??"comfortable"}><option value="comfortable">مريحة</option><option value="compact">مدمجة</option></select></label></section><section className="panel form-stack"><h2>صفحة العرض والتواصل</h2><label>نبذة العيادة<Textarea name="description" maxLength={1000} defaultValue={data.settings?.public_description??''}/></label><label>الخدمات (خدمة في كل سطر)<Textarea name="services" maxLength={1000} defaultValue={data.settings?.public_services??''}/></label><label>ساعات العمل<Input name="hours" maxLength={200} defaultValue={data.settings?.opening_hours??''}/></label><label>الهاتف<Input name="phone" maxLength={30} defaultValue={data.settings?.phone??''}/></label><label>البريد<Input name="email" type="email" maxLength={255} defaultValue={data.settings?.email??''}/></label><label>العنوان<Textarea name="address" maxLength={500} defaultValue={data.settings?.address??''}/></label>{saved&&<div className="form-message">{saved}</div>}<Button size="lg">حفظ التغييرات</Button></section></form><GalleryManager /><PricesManager data={data} /><FinanceSettings data={data} /></>;
+  return <><form className="settings-grid" onSubmit={save}><section className="panel form-stack"><h2><Palette/> الهوية البصرية</h2><label>اسم العيادة<Input name="clinicName" value="Alteesh Clinic" readOnly/></label><label>الشعار<Input name="logo" type="file" accept="image/png,image/jpeg,image/webp"/></label><div className="color-fields"><label>اللون الأساسي<Input name="primary" type="color" defaultValue={data.settings?.primary_color}/></label><label>اللون المساند<Input name="accent" type="color" defaultValue={data.settings?.accent_color}/></label></div><label>الخط<select name="fontFamily" defaultValue={data.settings?.font_family??"formal"}><option value="formal">رسمي أنيق</option><option value="modern">عصري واضح</option></select></label><label>كثافة الواجهة<select name="density" defaultValue={data.settings?.interface_density??"comfortable"}><option value="comfortable">مريحة</option><option value="compact">مدمجة</option></select></label></section><section className="panel form-stack"><h2>صفحة العرض والتواصل</h2><label>نبذة العيادة<Textarea name="description" maxLength={1000} defaultValue={data.settings?.public_description??''}/></label><label>الخدمات (خدمة في كل سطر)<Textarea name="services" maxLength={1000} defaultValue={data.settings?.public_services??''}/></label><label>ساعات العمل<Input name="hours" maxLength={200} defaultValue={data.settings?.opening_hours??''}/></label><label>الهاتف<Input name="phone" maxLength={30} defaultValue={data.settings?.phone??''}/></label><label>البريد<Input name="email" type="email" maxLength={255} defaultValue={data.settings?.email??''}/></label><label>العنوان<Textarea name="address" maxLength={500} defaultValue={data.settings?.address??''}/></label>{saved&&<div className="form-message">{saved}</div>}<Button size="lg">حفظ التغييرات</Button></section></form><GalleryManager /><CasesManager /><PricesManager data={data} /><FinanceSettings data={data} /></>;
 }
 
 function CreateForm({ page, data, done }: { page: Page; data: Awaited<ReturnType<typeof loadClinic>> | undefined; done: () => void }) {
@@ -436,6 +436,79 @@ function GalleryManager() {
           <img src={r["image_url"]} alt={r["caption"] || "صورة"} loading="lazy" style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 8 }} />
           {r["caption"] && <div style={{ fontSize: 12, marginTop: 6 }}>{r["caption"]}</div>}
           <ConfirmDelete title="حذف الصورة" text="ستُحذف الصورة من المعرض ومن الصفحة العامة نهائياً." onConfirm={() => remove(r)} />
+        </div>)}
+      </div>}
+  </section>;
+}
+
+function CasesManager() {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState("");
+  const list = useQuery({
+    queryKey: ["cases"],
+    queryFn: async () => { const { data: rows, error } = await sb.from("clinic_cases").select("*").order("sort_order", { ascending: true }).order("created_at", { ascending: false }); if (error) throw error; return (rows ?? []) as AnyRow[]; },
+  });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["cases"] });
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); const form = e.currentTarget; const f = new FormData(form);
+    setBusy(true); setMsg("");
+    const uploaded: string[] = [];
+    try {
+      const title = String(f.get("title") || "").trim(); if (title.length < 2) throw new Error("اكتب عنواناً للحالة");
+      const before = f.get("before"); const after = f.get("after");
+      if (!(before instanceof File) || !before.size || !(after instanceof File) || !after.size) throw new Error("اختر صورة «قبل» وصورة «بعد»");
+      for (const fl of [before, after]) if (!["image/jpeg", "image/png", "image/webp"].includes(fl.type)) throw new Error("الأنواع المسموحة: JPG أو PNG أو WEBP");
+      if ((list.data ?? []).length >= 12) throw new Error("الحد الأقصى 12 حالة، احذف حالة قبل إضافة أخرى");
+      if (!f.get("consent")) throw new Error("أكّد موافقة المريض على نشر الصور");
+      const { data: { user } } = await supabase.auth.getUser(); if (!user) throw new Error("انتهت الجلسة، سجّل الدخول من جديد");
+      const put = async (raw: File) => {
+        const file = await shrinkImage(raw);
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5) || "jpg";
+        const path = `cases/${crypto.randomUUID()}.${ext}`;
+        const up = await supabase.storage.from("clinic-gallery").upload(path, file, { contentType: file.type, upsert: false });
+        if (up.error) throw up.error;
+        uploaded.push(path);
+        return { path, url: supabase.storage.from("clinic-gallery").getPublicUrl(path).data.publicUrl };
+      };
+      const b = await put(before); const a = await put(after);
+      const ins = await sb.from("clinic_cases").insert({ title, description: String(f.get("description") || "").trim() || null, before_url: b.url, before_path: b.path, after_url: a.url, after_path: a.path, created_by: user.id });
+      if (ins.error) throw ins.error;
+      form.reset(); await refresh();
+    } catch (err) {
+      if (uploaded.length) await supabase.storage.from("clinic-gallery").remove(uploaded);
+      setMsg(errText(err));
+    } finally { setBusy(false); }
+  }
+  async function remove(row: AnyRow) {
+    setMsg("");
+    const { error } = await sb.from("clinic_cases").delete().eq("id", row["id"]);
+    if (error) { setMsg(error.message); return; }
+    await supabase.storage.from("clinic-gallery").remove([row["before_path"], row["after_path"]]);
+    await refresh();
+  }
+  return <section className="panel form-stack" style={{ marginTop: 16 }}>
+    <h2>عرض الحالات (قبل / بعد)</h2>
+    <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>تظهر هذه الحالات للمرضى في الصفحة العامة (حتى 12 حالة). انشر فقط صور مرضى وافقوا على ذلك، وتجنّب أي صورة تكشف هويتهم.</p>
+    <form className="form-stack" onSubmit={submit}>
+      <label>عنوان الحالة<Input name="title" maxLength={120} required placeholder="مثال: تجميل الأسنان الأمامية" /></label>
+      <label>وصف قصير (اختياري)<Textarea name="description" maxLength={300} /></label>
+      <div className="form-grid">
+        <label>صورة «قبل»<Input name="before" type="file" accept="image/jpeg,image/png,image/webp" required /></label>
+        <label>صورة «بعد»<Input name="after" type="file" accept="image/jpeg,image/png,image/webp" required /></label>
+      </div>
+      <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" name="consent" /> أؤكد موافقة المريض على نشر صور حالته</label>
+      <Button type="submit" disabled={busy}>{busy ? "جارٍ الرفع..." : "إضافة الحالة"}</Button>
+    </form>
+    {msg && <div className="form-message">{msg}</div>}
+    {list.isLoading ? <Loading /> : list.error ? <Empty title="تعذر تحميل الحالات" text="تأكد من تنفيذ ملف SQL الخاص بالحالات (0013)." /> : !(list.data ?? []).length ? <Empty title="لا توجد حالات" text="أضف أول حالة لتظهر في الصفحة العامة." /> :
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 12 }}>
+        {(list.data ?? []).map((r: AnyRow) => <div className="panel" key={r["id"]} style={{ padding: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            <img src={r["before_url"]} alt="قبل" loading="lazy" style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 6 }} />
+            <img src={r["after_url"]} alt="بعد" loading="lazy" style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 6 }} />
+          </div>
+          <div style={{ fontSize: 13, marginTop: 6, fontWeight: 600 }}>{r["title"]}</div>
+          <ConfirmDelete title="حذف الحالة" text="ستُحذف الحالة وصورتاها من الصفحة العامة نهائياً." onConfirm={() => remove(r)} />
         </div>)}
       </div>}
   </section>;
