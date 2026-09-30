@@ -26,7 +26,7 @@ function lines(v: unknown): string[] {
 
 function PublicHome() {
   const c = Route.useLoaderData() as Record<string, unknown> | null;
-  const name = String(c?.["clinic_name"] ?? "Alteesh Clinic");
+  const name = "Alteesh Clinic";
   const services = lines(c?.["public_services"]);
   const hours = lines(c?.["opening_hours"]);
   const phone = c?.["phone"] ? String(c["phone"]) : "";

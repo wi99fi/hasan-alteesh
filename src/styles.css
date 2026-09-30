@@ -64,20 +64,20 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.975 0.008 80);
-  --foreground: oklch(0.28 0.035 210);
+  --radius: 0.8rem;
+  --background: oklch(0.975 0.012 82);
+  --foreground: oklch(0.31 0.03 220);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.54 0.087 190);
+  --primary: oklch(0.51 0.085 197);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.94 0.025 80);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.94 0.018 80);
   --muted-foreground: oklch(0.52 0.03 210);
-  --accent: oklch(0.68 0.12 38);
+  --accent: oklch(0.7 0.13 38);
   --accent-foreground: oklch(0.208 0.042 265.755);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
@@ -205,7 +205,7 @@ button, input, textarea, select { font: inherit; }
 .pub-foot{padding:28px 6vw;border-top:1px solid var(--border);color:var(--muted-foreground);font-size:13px;text-align:center}
 @media(max-width:800px){.pub-hero{grid-template-columns:1fr;padding:36px 6vw}}
 .clinic-shell[data-font="modern"]{--font-display:"IBM Plex Sans Arabic",system-ui,sans-serif}
-.clinic-shell[data-font="formal"]{--font-display:"Libre Baskerville","IBM Plex Sans Arabic",serif}
+.clinic-shell[data-font="formal"]{--font-display:"Noto Kufi Arabic","IBM Plex Sans Arabic",sans-serif}
 .clinic-shell[data-density="compact"] .page-wrap{padding:18px 20px 40px}
 .clinic-shell[data-density="compact"] .panel,.clinic-shell[data-density="compact"] .stat-card{padding:12px}
 .clinic-shell[data-density="compact"] td,.clinic-shell[data-density="compact"] th{padding-block:6px}
@@ -220,3 +220,41 @@ button, input, textarea, select { font: inherit; }
 .cal-event{position:absolute;inset-inline:4px;overflow:hidden;background:color-mix(in oklch,var(--primary) 12%,var(--card));border:1px solid color-mix(in oklch,var(--primary) 30%,var(--card));border-inline-start:4px solid var(--primary);border-radius:6px;padding:4px 7px;font-size:11px;display:flex;flex-direction:column;gap:1px}
 .cal-event time{color:var(--primary);font-weight:700}.cal-event span{color:var(--muted-foreground)}.cal-event a{position:absolute;top:4px;inset-inline-end:4px;color:var(--primary)}.cal-event a svg{width:14px;height:14px}
 .cal-busy{background:var(--muted);border:1px dashed var(--muted-foreground);color:var(--muted-foreground);align-items:center;justify-content:center;font-weight:700}
+
+.brand{gap:12px;padding:0 4px 28px;border-bottom:0;margin-bottom:10px}
+.logo-mark{display:flex;width:52px;height:44px;flex:none;align-items:center;justify-content:center;overflow:hidden;border-radius:11px;background:var(--secondary);box-shadow:0 5px 12px color-mix(in oklch,var(--primary) 12%,transparent)}
+.logo-mark img{display:block;width:100%;height:100%;object-fit:contain;background:transparent;border-radius:0;padding:2px}
+.sidebar-note{margin:0 0 16px}
+.sidebar-note-title{display:flex;align-items:center;gap:8px;color:var(--primary);font-size:12px;font-weight:700}
+.sidebar-note-title span{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.sidebar-note p{margin:8px 0 0;color:var(--muted-foreground);font-size:12px;line-height:1.8}
+.topbar-user{display:flex;align-items:center;gap:10px}
+.topbar-identity{display:flex;flex-direction:column;min-width:0}
+.topbar-identity strong{font-size:13px}
+.topbar-identity span{color:var(--muted-foreground);font-size:11px}
+.heading-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:9px;background:var(--primary);padding:10px 14px;color:var(--primary-foreground);font-size:13px;font-weight:700;transition:filter .18s}
+.heading-action:hover{filter:brightness(.95)}
+.heading-action svg{width:17px;height:17px}
+.quick-actions{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:20px;border:1px solid var(--border);border-radius:14px;padding:20px 22px;background:linear-gradient(105deg,color-mix(in oklch,var(--secondary) 75%,transparent),var(--card));box-shadow:0 12px 30px color-mix(in oklch,var(--foreground) 5%,transparent)}
+.quick-actions>div:first-child{display:flex;flex-direction:column;gap:5px}
+.quick-actions>div:first-child strong{font-family:var(--font-display);font-size:14px}
+.quick-actions>div:first-child span{color:var(--muted-foreground);font-size:12px}
+.quick-action-list{display:flex;flex-wrap:wrap;gap:8px}
+.quick-action{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:9px;background:var(--card);padding:9px 13px;font-size:13px;font-weight:700;transition:all .18s}
+.quick-action:hover{border-color:color-mix(in oklch,var(--primary) 35%,transparent);color:var(--primary);transform:translateY(-1px)}
+.quick-action svg{width:15px;height:15px}
+.panel-heading{background:color-mix(in oklch,var(--secondary) 32%,var(--card));padding:17px 20px}
+.panel-heading h2{margin:0;font-family:var(--font-display);font-size:15px}
+.panel-heading p{margin:4px 0 0;color:var(--muted-foreground);font-size:12px}
+.table-panel table{min-width:880px}
+.table-panel th{background:color-mix(in oklch,var(--secondary) 42%,var(--card));font-size:11px}
+.table-panel tbody tr{transition:background .16s}
+.table-panel tbody tr:hover{background:color-mix(in oklch,var(--secondary) 35%,var(--card))}
+.patient-row-copy{display:flex;flex-direction:column;gap:3px}
+.patient-row-copy span{color:var(--muted-foreground);font-size:11px}
+.patient-balance{color:var(--destructive);font-weight:700;white-space:nowrap}
+.patient-settled{color:var(--primary);font-size:12px;font-weight:700}
+.form-stack input,.form-stack textarea,.form-stack select{border-radius:8px;background:var(--card)}
+.modal-card{animation:modal-in .2s ease-out}
+@keyframes modal-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:767px){.topbar-identity{display:none}.topbar-user{gap:0}.quick-actions{align-items:flex-start;flex-direction:column;padding:16px}.quick-action-list{width:100%}.quick-action{flex:1;justify-content:center}.heading-action{padding:9px 10px;font-size:12px}}
