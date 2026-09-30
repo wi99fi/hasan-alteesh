@@ -9,10 +9,10 @@ import logo from "@/assets/alteesh-clinic-logo.png";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
-    { title: "تسجيل الدخول — عيادة التيش" },
-    { name: "description", content: "تسجيل الدخول الآمن إلى نظام إدارة عيادة التيش." },
-    { property: "og:title", content: "تسجيل الدخول — عيادة التيش" },
-    { property: "og:description", content: "تسجيل الدخول الآمن إلى نظام إدارة عيادة التيش." },
+    { title: "تسجيل الدخول — Alteesh Clinic" },
+    { name: "description", content: "تسجيل الدخول الآمن إلى نظام إدارة Alteesh Clinic." },
+    { property: "og:title", content: "تسجيل الدخول — Alteesh Clinic" },
+    { property: "og:description", content: "تسجيل الدخول الآمن إلى نظام إدارة Alteesh Clinic." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ]}),
@@ -61,7 +61,7 @@ function AuthPage() {
   }
 
   return <main className="auth-page" dir="rtl">
-    <section className="auth-brand"><img src={logo} alt="شعار عيادة التيش" /><p>نظام متكامل لإدارة عيادتك</p></section>
+    <section className="auth-brand"><img src={logo} alt="شعار Alteesh Clinic" /><p>نظام متكامل لإدارة عيادتك</p></section>
     <section className="auth-panel">
       <div className="auth-card">
         <span className="eyebrow">مرحباً بك</span>

@@ -68,7 +68,7 @@ export function ClinicApp({ page }: { page: Page }) {
   return <div className="clinic-shell" dir="rtl" style={{ "--primary": settings?.primary_color, "--accent": settings?.accent_color } as React.CSSProperties}>
     {menu && <button className="mobile-scrim" aria-label="إغلاق القائمة" onClick={() => setMenu(false)} />}
     <aside className={`sidebar ${menu ? "sidebar-open" : ""}`}>
-      <div className="brand"><img src={settings?.logo_url ?? logo} alt="شعار العيادة" /><div><strong>{settings?.clinic_name ?? "عيادة التيش"}</strong><span>نظام الإدارة الطبية</span></div><Button className="mobile-close" variant="ghost" size="icon" onClick={() => setMenu(false)}><X /></Button></div>
+      <div className="brand"><img src={settings?.logo_url ?? logo} alt="شعار العيادة" /><div><strong>{settings?.clinic_name ?? "Alteesh Clinic"}</strong><span>نظام الإدارة الطبية</span></div><Button className="mobile-close" variant="ghost" size="icon" onClick={() => setMenu(false)}><X /></Button></div>
        <nav>{nav.filter(([id])=>pageRoles[id].some(role=>myRoles.includes(role))).map(([id, to, label, Icon]) => <Link key={id} to={to} className={`nav-link ${page === id ? "nav-link-active" : ""}`} onClick={() => setMenu(false)}><Icon /> <span>{label}</span></Link>)}</nav>
       <div className="sidebar-user"><div className="avatar">{me?.full_name?.slice(0, 1) ?? "م"}</div><div><strong>{me?.full_name ?? "مستخدم العيادة"}</strong><span>حساب نشط</span></div><Button variant="ghost" size="icon" onClick={signOut} title="تسجيل الخروج"><LogOut /></Button></div>
     </aside>
