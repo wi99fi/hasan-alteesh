@@ -50,6 +50,13 @@
       "when": 1790669052230,
       "tag": "0006_grant_owner_super_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790727221531,
+      "tag": "0007_protect_super_admin_scheduling_doctor_scope",
+      "breakpoints": true
     }
   ]
 }
