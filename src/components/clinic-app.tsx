@@ -48,16 +48,41 @@ const titles: Record<Page, [string, string]> = {
   inventory: ["المخزون", "المواد والمستلزمات وحركتها"], bookings: ["طلبات الحجز", "طلبات المواعيد الواردة من الصفحة العامة"], activity: ["سجل النشاط", "من أضاف أو عدّل أو حذف، ومتى"],
 };
 
+const PAGE_SIZE = 1000;
+/** يعيد بقية الصفحات إن كانت الصفحة الأولى ممتلئة (الخادم يقطع عند 1000 سجل افتراضياً) */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function more<B extends PromiseLike<unknown>>(firstPage: B, make: () => any): Promise<Awaited<B>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const first = (await firstPage) as any;
+  if (first.error || !Array.isArray(first.data) || first.data.length < PAGE_SIZE) return first as Awaited<B>;
+  const all: unknown[] = [...first.data];
+  for (let from = PAGE_SIZE; ; from += PAGE_SIZE) {
+    const next = await make().range(from, from + PAGE_SIZE - 1);
+    if (next.error) return { ...first, data: null, error: next.error } as Awaited<B>;
+    all.push(...(next.data ?? []));
+    if (!Array.isArray(next.data) || next.data.length < PAGE_SIZE) break;
+  }
+  return { ...first, data: all } as Awaited<B>;
+}
+
 async function loadClinic() {
+  // كل استعلام مُعرَّف كدالة ليُعاد بناؤه لكل صفحة؛ ترتيب id الثانوي يثبّت الصفحات
+  const qPatients = () => supabase.from("patients").select("*").eq("is_active", true).order("created_at", { ascending: false }).order("id");
+  const qAppointments = () => supabase.from("appointments").select("*, patients(full_name), chairs(name)").order("starts_at").order("id");
+  const qInvoices = () => supabase.from("invoices").select("*, patients(full_name)").order("created_at", { ascending: false }).order("id");
+  const qTreatments = () => supabase.from("treatments").select("*, patients(full_name)").order("treated_at", { ascending: false }).order("id");
+  const qPrescriptions = () => supabase.from("prescriptions").select("*, patients(full_name)").order("prescribed_at", { ascending: false }).order("id");
+  const qDental = () => supabase.from("dental_chart_entries").select("*, patients(full_name)").order("created_at", { ascending: false }).order("id");
+  const qPayments = () => supabase.from("payments").select("*").order("paid_at", { ascending: false }).order("id");
   const [patients, appointments, profiles, roles, chairs, invoices, settings, treatments, prescriptions, dentalChart, payments] = await Promise.all([
-    supabase.from("patients").select("*").eq("is_active", true).order("created_at", { ascending: false }),
-    supabase.from("appointments").select("*, patients(full_name), chairs(name)").order("starts_at"),
+    more(qPatients().range(0, PAGE_SIZE - 1), qPatients),
+    more(qAppointments().range(0, PAGE_SIZE - 1), qAppointments),
     supabase.from("profiles").select("*").order("full_name"), supabase.from("user_roles").select("*"),
-    supabase.from("chairs").select("*").order("name"), supabase.from("invoices").select("*, patients(full_name)").order("created_at", { ascending: false }),
-    supabase.from("clinic_settings").select("*").limit(1).maybeSingle(), supabase.from("treatments").select("*, patients(full_name)").order("treated_at", { ascending: false }),
-    supabase.from("prescriptions").select("*, patients(full_name)").order("prescribed_at", { ascending: false }),
-    supabase.from("dental_chart_entries").select("*, patients(full_name)").order("created_at", { ascending: false }),
-    supabase.from("payments").select("*").order("paid_at", { ascending: false }),
+    supabase.from("chairs").select("*").order("name"), more(qInvoices().range(0, PAGE_SIZE - 1), qInvoices),
+    supabase.from("clinic_settings").select("*").limit(1).maybeSingle(), more(qTreatments().range(0, PAGE_SIZE - 1), qTreatments),
+    more(qPrescriptions().range(0, PAGE_SIZE - 1), qPrescriptions),
+    more(qDental().range(0, PAGE_SIZE - 1), qDental),
+    more(qPayments().range(0, PAGE_SIZE - 1), qPayments),
   ]);
   // جداول التسعير والنسب: إن لم تُنفَّذ ملفات SQL بعد نُرجع قوائم فارغة بدل تعطيل التطبيق
   const [pricesRes, sharesRes, financeRes] = await Promise.all([
@@ -100,7 +125,7 @@ export function ClinicApp({ page }: { page: Page }) {
   useEffect(() => { const el = document.createElement("style"); el.id = "brand-theme-css"; el.textContent = BRAND_THEME_CSS; document.head.appendChild(el); return () => el.remove(); }, []);
   useEffect(()=>{ try{ const s=localStorage.getItem("clinic-theme"); if(s==="alt"||s==="premium"||s==="brand"){ setTheme(s); applyTheme(s); } }catch{ /* التخزين غير متاح */ } },[]);
   function switchTheme(){ const next=theme==="classic"?"alt":theme==="alt"?"premium":theme==="premium"?"brand":"classic"; setTheme(next); applyTheme(next); try{ localStorage.setItem("clinic-theme",next); }catch{ /* التخزين غير متاح */ } }
-  const { data, isLoading, error } = useQuery({ queryKey: ["clinic"], queryFn: loadClinic });
+  const { data, isLoading, error } = useQuery({ queryKey: ["clinic"], queryFn: loadClinic, staleTime: 60_000 });
   useEffect(() => { supabase.auth.getUser().then(async ({ data: auth }) => { if (auth.user) { setUserId(auth.user.id); await ensure({ data: { fullName: String(auth.user.user_metadata?.["full_name"] ?? auth.user.email?.split("@")[0] ?? "مستخدم العيادة") } }); await qc.invalidateQueries({ queryKey: ["clinic"] }); } setBootstrapped(true); }); }, [ensure, qc]);
   const myRoles=(data?.roles.filter(r=>r.user_id===userId).map(r=>r.role)??[]) as Role[]; const allowed=pageRoles[page].some(role=>myRoles.includes(role));
   const me = data?.profiles.find((p) => p.id===userId);
