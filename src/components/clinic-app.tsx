@@ -380,7 +380,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:18px}th{background:#0b47
 function Invoices({ data, myRoles }: { data: Awaited<ReturnType<typeof loadClinic>>; myRoles: Role[] }) {
   const doctorOnly = !myRoles.some((r) => ["super_admin", "admin", "receptionist"].includes(r));
   const qc = useQueryClient(); const [msg, setMsg] = useState("");
-  const canCancel = !doctorOnly; { const ok = printInvoice(i, data.payments.filter((py) => py.invoice_id === i.id), docName(i.doctor_id), data.settings as AnyRow | null); setMsg(ok ? "" : "اسمح بالنوافذ المنبثقة في المتصفح لتتمكن من الطباعة"); }
+  const canCancel = !doctorOnly;
   async function cancelInvoice(id: string) { const { error } = await sb.rpc("cancel_invoice", { _invoice_id: id }); setMsg(error ? error.message : ""); await qc.invalidateQueries({ queryKey: ["clinic"] }); }
   const docName = (id?: string | null) => data.profiles.find((p) => p.id === id)?.full_name ?? "—";
   function printOne(i: AnyRow) { const ok = printInvoice(i, data.payments.filter((py) => py.invoice_id === i['id']), docName(i['doctor_id']), data.settings as AnyRow | null); setMsg(ok ? "" : "اسمح بالنوافذ المنبثقة في المتصفح لتتمكن من الطباعة"); }
