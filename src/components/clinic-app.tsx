@@ -127,7 +127,6 @@ export function ClinicApp({ page }: { page: Page }) {
   useEffect(() => { const el = document.createElement("style"); el.id = "brand-theme-css"; el.textContent = BRAND_THEME_CSS; document.head.appendChild(el); return () => el.remove(); }, []);
   useEffect(()=>{ try{ const s=localStorage.getItem("clinic-theme"); if(s==="alt"||s==="premium"||s==="brand"){ setTheme(s); applyTheme(s); } }catch{ /* التخزين غير متاح */ } },[]);
   function chooseTheme(t:ThemeId){ setTheme(t); applyTheme(t); try{ localStorage.setItem("clinic-theme",t); }catch{ /* التخزين غير متاح */ } }
-  function switchTheme(){ const next=theme==="classic"?"alt":theme==="alt"?"premium":theme==="premium"?"brand":"classic"; setTheme(next); applyTheme(next); try{ localStorage.setItem("clinic-theme",next); }catch{ /* التخزين غير متاح */ } }
   const { data, isLoading, error } = useQuery({ queryKey: ["clinic"], queryFn: loadClinic, staleTime: 60_000 });
   useEffect(() => { supabase.auth.getUser().then(async ({ data: auth }) => { if (auth.user) { setUserId(auth.user.id); await ensure({ data: { fullName: String(auth.user.user_metadata?.["full_name"] ?? auth.user.email?.split("@")[0] ?? "مستخدم العيادة") } }); await qc.invalidateQueries({ queryKey: ["clinic"] }); } setBootstrapped(true); }); }, [ensure, qc]);
   const myRoles=(data?.roles.filter(r=>r.user_id===userId).map(r=>r.role)??[]) as Role[]; const allowed=pageRoles[page].some(role=>myRoles.includes(role));
@@ -143,7 +142,7 @@ export function ClinicApp({ page }: { page: Page }) {
       <div className="sidebar-user"><div className="avatar">{me?.full_name?.slice(0, 1) ?? "م"}</div><div><strong>{me?.full_name ?? "مستخدم العيادة"}</strong><span>حساب نشط</span></div><Button variant="ghost" size="icon" onClick={signOut} title="تسجيل الخروج"><LogOut /></Button></div>
     </aside>
     <main className="app-main">
-      <header className="topbar"><Button className="menu-button" variant="ghost" size="icon" onClick={() => setMenu(true)}><Menu /></Button><div className="global-search"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث سريع..." /></div><span className="today">{new Intl.DateTimeFormat("ar-SY", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span><Button type="button" variant="outline" size="sm" onClick={switchTheme} title="تبديل نمط الواجهة"><Palette /> {theme==="classic"?"النمط الثاني":theme==="alt"?"النمط الثالث":theme==="premium"?"نمط الشعار":"النمط الأول"}</Button><div className="topbar-user"><div className="topbar-identity"><strong>{me?.full_name ?? "مستخدم العيادة"}</strong><span>{myRoles[0] ? roleLabel(myRoles[0]) : ""}</span></div><div className="avatar avatar-coral">{me?.full_name?.slice(0, 1) ?? "م"}</div></div></header>
+      <header className="topbar"><Button className="menu-button" variant="ghost" size="icon" onClick={() => setMenu(true)}><Menu /></Button><div className="global-search"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="بحث سريع..." /></div><span className="today">{new Intl.DateTimeFormat("ar-SY", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span><div className="topbar-user"><div className="topbar-identity"><strong>{me?.full_name ?? "مستخدم العيادة"}</strong><span>{myRoles[0] ? roleLabel(myRoles[0]) : ""}</span></div><div className="avatar avatar-coral">{me?.full_name?.slice(0, 1) ?? "م"}</div></div></header>
       <div className="page-wrap"><PageHeading title={title[0]} subtitle={title[1]} action={page === "dashboard" ? <Link to="/appointments" className="heading-action"><CalendarDays /> فتح جدول المواعيد</Link> : page !== "reports" && page !== "activity" && page !== "bookings" && !(page === "inventory" && !myRoles.some((r) => ["super_admin", "admin"].includes(r))) && !(page === "invoices" && !myRoles.some((r) => ["super_admin", "admin", "receptionist"].includes(r))) ? <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild><Button><Plus /> إضافة جديد</Button></DialogTrigger><DialogContent dir="rtl" className="modal-card"><DialogHeader><DialogTitle>إضافة {title[0]}</DialogTitle></DialogHeader><CreateForm page={page} data={data ?? undefined} done={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["clinic"] }); qc.invalidateQueries({ queryKey: ["occupancy"] }); qc.invalidateQueries({ queryKey: ["inventory"] }); }} /></DialogContent></Dialog> : undefined} />
       {isLoading || !data || !bootstrapped ? <Loading /> : error ? <Empty title="تعذر تحميل البيانات" text="تحقق من اتصالك ثم أعد المحاولة." /> : !allowed ? <div className="panel empty-state"><ShieldAlert/><h3>ليس لديك صلاحية لهذه الصفحة</h3><p>تواصل مع مدير العيادة إذا كنت تحتاج إلى الوصول.</p></div> : <PageBody page={page} data={data} search={search} myRoles={myRoles} myId={userId} theme={theme} onTheme={chooseTheme} />}</div>
     </main>
@@ -435,6 +434,7 @@ const THEME_OPTIONS: { id: ThemeId; name: string; note: string; colors: [string,
 ];
 
 function ThemePicker({ theme, onTheme }: { theme: ThemeId; onTheme: (t: ThemeId) => void }) {
+  const [chart, setChart] = useState<"jaws" | "classic">(() => { try { return localStorage.getItem("dental-chart-style") === "classic" ? "classic" : "jaws"; } catch { return "jaws"; } });
   return <section className="panel form-stack" style={{ marginBottom: 16 }}>
     <h2><Palette /> مظهر لوحة التحكم</h2>
     <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>اختر المظهر الذي يناسبك، ويُطبَّق فوراً ويُحفظ على هذا الجهاز فقط (لا يغيّر ما يراه الآخرون).</p>
@@ -446,6 +446,7 @@ function ThemePicker({ theme, onTheme }: { theme: ThemeId; onTheme: (t: ThemeId)
         <small style={{ color: "var(--muted-foreground)" }}>{o.note}</small>
       </button>; })}
     </div>
+    <label>شكل مخطط الأسنان (على هذا الجهاز)<select value={chart} onChange={(e) => { const v = e.target.value === "classic" ? "classic" : "jaws"; setChart(v); try { localStorage.setItem("dental-chart-style", v); } catch { /* التخزين غير متاح */ } }}><option value="jaws">فكّان (الجديد)</option><option value="classic">كلاسيكي</option></select></label>
   </section>;
 }
 

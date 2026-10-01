@@ -156,8 +156,19 @@ function DentalChartBrand({ patient, entries, canEdit }: { patient: AnyRow; entr
   </div>;
 }
 
-/** يعرض نمط الشعار عند تفعيله من زر تبديل النمط، وإلا المخطط الكلاسيكي */
+/** شكل المخطط مستقل عن نمط النظام: الافتراضي «فكّان»، ويمكن العودة للكلاسيكي (يُحفظ على الجهاز) */
+const CHART_KEY = "dental-chart-style";
 export function DentalChart(props: { patient: AnyRow; entries: AnyRow[]; canEdit: boolean }) {
-  const brand = typeof document !== "undefined" && document.documentElement.dataset["theme"] === "brand";
-  return brand ? <DentalChartBrand {...props} /> : <DentalChartClassic {...props} />;
+  const [style, setStyle] = useState<"jaws" | "classic">("jaws");
+  useEffect(() => { try { const s = window.localStorage.getItem(CHART_KEY); if (s === "classic" || s === "jaws") setStyle(s); } catch { /* التخزين غير متاح */ } }, []);
+  function choose(s: "jaws" | "classic") { setStyle(s); try { window.localStorage.setItem(CHART_KEY, s); } catch { /* تجاهل */ } }
+  const pill = (on: boolean) => ({ border: `2px solid ${NAVY}`, background: on ? NAVY : "#fff", color: on ? "#fff" : INK, borderRadius: 999, padding: "4px 12px", fontWeight: 800, fontSize: 12, cursor: "pointer" } as const);
+  return <div dir="rtl" style={{ display: "grid", gap: 10 }}>
+    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+      <small style={{ fontWeight: 700 }}>شكل المخطط:</small>
+      <button type="button" style={pill(style === "jaws")} aria-pressed={style === "jaws"} onClick={() => choose("jaws")}>فكّان</button>
+      <button type="button" style={pill(style === "classic")} aria-pressed={style === "classic"} onClick={() => choose("classic")}>كلاسيكي</button>
+    </div>
+    {style === "jaws" ? <DentalChartBrand {...props} /> : <DentalChartClassic {...props} />}
+  </div>;
 }
