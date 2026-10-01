@@ -13,17 +13,17 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedAppointmentsRouteImport } from './routes/_authenticated/appointments'
+import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedClinicalRouteImport } from './routes/_authenticated/clinical'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedPatientsRouteImport } from './routes/_authenticated/patients'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
-import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
-import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
-import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -44,12 +44,22 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAppointmentsRoute =
   AuthenticatedAppointmentsRouteImport.update({
     id: '/appointments',
     path: '/appointments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedClinicalRoute = AuthenticatedClinicalRouteImport.update({
   id: '/clinical',
   path: '/clinical',
@@ -58,6 +68,11 @@ const AuthenticatedClinicalRoute = AuthenticatedClinicalRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInvoicesRoute = AuthenticatedInvoicesRouteImport.update({
@@ -85,53 +100,38 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBookingsRoute = AuthenticatedBookingsRouteImport.update({
-  id: '/bookings',
-  path: '/bookings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/activity': typeof AuthenticatedActivityRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
+  '/bookings': typeof AuthenticatedBookingsRoute
   '/clinical': typeof AuthenticatedClinicalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/patients': typeof AuthenticatedPatientsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
-  '/inventory': typeof AuthenticatedInventoryRoute
-  '/bookings': typeof AuthenticatedBookingsRoute
-  '/activity': typeof AuthenticatedActivityRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/activity': typeof AuthenticatedActivityRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
+  '/bookings': typeof AuthenticatedBookingsRoute
   '/clinical': typeof AuthenticatedClinicalRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/inventory': typeof AuthenticatedInventoryRoute
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/patients': typeof AuthenticatedPatientsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRoute
-  '/inventory': typeof AuthenticatedInventoryRoute
-  '/bookings': typeof AuthenticatedBookingsRoute
-  '/activity': typeof AuthenticatedActivityRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -139,17 +139,17 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/appointments': typeof AuthenticatedAppointmentsRoute
+  '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/clinical': typeof AuthenticatedClinicalRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/patients': typeof AuthenticatedPatientsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
-  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
-  '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
-  '/_authenticated/activity': typeof AuthenticatedActivityRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,50 +157,50 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/activity'
     | '/appointments'
+    | '/bookings'
     | '/clinical'
     | '/dashboard'
+    | '/inventory'
     | '/invoices'
     | '/patients'
     | '/reports'
     | '/settings'
     | '/team'
-    | '/inventory'
-    | '/bookings'
-    | '/activity'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/activity'
     | '/appointments'
+    | '/bookings'
     | '/clinical'
     | '/dashboard'
+    | '/inventory'
     | '/invoices'
     | '/patients'
     | '/reports'
     | '/settings'
     | '/team'
-    | '/inventory'
-    | '/bookings'
-    | '/activity'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/activity'
     | '/_authenticated/appointments'
+    | '/_authenticated/bookings'
     | '/_authenticated/clinical'
     | '/_authenticated/dashboard'
+    | '/_authenticated/inventory'
     | '/_authenticated/invoices'
     | '/_authenticated/patients'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/team'
-    | '/_authenticated/inventory'
-    | '/_authenticated/bookings'
-    | '/_authenticated/activity'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,11 +240,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/appointments': {
       id: '/_authenticated/appointments'
       path: '/appointments'
       fullPath: '/appointments'
       preLoaderRoute: typeof AuthenticatedAppointmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bookings': {
+      id: '/_authenticated/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof AuthenticatedBookingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clinical': {
@@ -259,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inventory': {
+      id: '/_authenticated/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/invoices': {
@@ -296,56 +317,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/inventory': {
-      id: '/_authenticated/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/bookings': {
-      id: '/_authenticated/bookings'
-      path: '/bookings'
-      fullPath: '/bookings'
-      preLoaderRoute: typeof AuthenticatedBookingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/activity': {
-      id: '/_authenticated/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof AuthenticatedActivityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedAppointmentsRoute: typeof AuthenticatedAppointmentsRoute
+  AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedClinicalRoute: typeof AuthenticatedClinicalRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedPatientsRoute: typeof AuthenticatedPatientsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
-  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
-  AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
-  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedAppointmentsRoute: AuthenticatedAppointmentsRoute,
+  AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedClinicalRoute: AuthenticatedClinicalRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedPatientsRoute: AuthenticatedPatientsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
-  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
-  AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
-  AuthenticatedActivityRoute: AuthenticatedActivityRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

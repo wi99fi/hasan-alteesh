@@ -74,6 +74,75 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          at: string
+          id: string
+          record_id: string | null
+          summary: string | null
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          at?: string
+          id?: string
+          record_id?: string | null
+          summary?: string | null
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          at?: string
+          id?: string
+          record_id?: string | null
+          summary?: string | null
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      booking_requests: {
+        Row: {
+          created_at: string
+          full_name: string
+          handled_by: string | null
+          id: string
+          notes: string | null
+          phone: string
+          preferred_date: string | null
+          preferred_time: string | null
+          reason: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          phone: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          reason?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          handled_by?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          reason?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           address: string | null
@@ -135,6 +204,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      clinic_cases: {
+        Row: {
+          after_path: string
+          after_url: string
+          before_path: string
+          before_url: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          after_path: string
+          after_url: string
+          before_path: string
+          before_url: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          after_path?: string
+          after_url?: string
+          before_path?: string
+          before_url?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      clinic_gallery: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: []
       }
       clinic_settings: {
         Row: {
@@ -237,6 +375,124 @@ export type Database = {
           },
         ]
       }
+      doctor_shares: {
+        Row: {
+          doctor_id: string
+          percent: number
+          updated_at: string
+        }
+        Insert: {
+          doctor_id: string
+          percent?: number
+          updated_at?: string
+        }
+        Update: {
+          doctor_id?: string
+          percent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_shares_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_settings: {
+        Row: {
+          clinic_share_percent: number
+          id: boolean
+          materials_share_percent: number
+          updated_at: string
+        }
+        Insert: {
+          clinic_share_percent?: number
+          id?: boolean
+          materials_share_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          clinic_share_percent?: number
+          id?: boolean
+          materials_share_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          min_quantity: number
+          name: string
+          quantity: number
+          unit: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_quantity?: number
+          name: string
+          quantity?: number
+          unit?: string
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_quantity?: number
+          name?: string
+          quantity?: number
+          unit?: string
+          unit_cost?: number
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string
+          kind: string
+          note: string | null
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          item_id: string
+          kind: string
+          note?: string | null
+          quantity: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string
+          kind?: string
+          note?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           description: string
@@ -277,6 +533,7 @@ export type Database = {
           created_at: string
           created_by: string
           discount: number
+          doctor_id: string | null
           id: string
           invoice_number: string
           issued_at: string
@@ -291,6 +548,7 @@ export type Database = {
           created_at?: string
           created_by: string
           discount?: number
+          doctor_id?: string | null
           id?: string
           invoice_number: string
           issued_at?: string
@@ -305,6 +563,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           discount?: number
+          doctor_id?: string | null
           id?: string
           invoice_number?: string
           issued_at?: string
@@ -317,7 +576,55 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "invoices_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          kind: string
+          note: string | null
+          patient_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          kind?: string
+          note?: string | null
+          patient_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          patient_id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_files_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -510,6 +817,30 @@ export type Database = {
           },
         ]
       }
+      treatment_prices: {
+        Row: {
+          created_at: string
+          default_price: number
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          default_price?: number
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          default_price?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       treatments: {
         Row: {
           cost: number
@@ -580,9 +911,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_patient_clinical: { Args: { _pid: string }; Returns: boolean }
+      can_access_patient_file_path: {
+        Args: { _path: string }
+        Returns: boolean
+      }
+      can_manage_billing: { Args: { _uid: string }; Returns: boolean }
+      cancel_invoice: { Args: { _invoice_id: string }; Returns: undefined }
       claim_initial_super_admin: {
         Args: { _full_name: string }
         Returns: boolean
+      }
+      create_invoice: {
+        Args: {
+          _discount_kind: string
+          _discount_value: number
+          _doctor_id: string
+          _notes?: string
+          _patient_id: string
+          _subtotal: number
+        }
+        Returns: string
       }
       get_chair_occupancy: {
         Args: { _from: string; _to: string }
@@ -591,6 +940,17 @@ export type Database = {
           doctor_id: string
           ends_at: string
           starts_at: string
+        }[]
+      }
+      get_finance_report: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          clinic_share: number
+          doctor_id: string
+          doctor_name: string
+          doctor_share: number
+          materials_share: number
+          revenue: number
         }[]
       }
       get_public_clinic_settings: {
@@ -622,6 +982,10 @@ export type Database = {
       }
       is_non_doctor_staff: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      record_payment: {
+        Args: { _amount: number; _invoice_id: string; _method?: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "doctor" | "nurse" | "receptionist"
