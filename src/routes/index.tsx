@@ -108,15 +108,16 @@ function PublicHome() {
   const description = String(c?.["public_description"] ?? "") || "رعاية متكاملة لصحة أسنانكم بأحدث التقنيات وفريق طبي متخصص في بيئة مريحة وآمنة.";
   const shownServices = services.length ? services : ["فحص وتنظيف الأسنان", "حشوات تجميلية", "علاج العصب", "تركيبات وتيجان", "زراعة الأسنان", "طب أسنان الأطفال"];
   const shownHours = hours.length ? hours : ["السبت – الخميس: 9 صباحاً – 8 مساءً"];
-  const [mode, setMode] = useState<"brand" | "classic">("brand");
+  // النمط الافتراضي يحدده المدير من الإعدادات؛ والزائر يستطيع التبديل مؤقتاً أو عبر ?style=
+  const adminStyle = (c as Record<string, unknown> | null)?.["public_style"] === "classic" ? "classic" : "brand";
+  const [mode, setMode] = useState<"brand" | "classic">(adminStyle);
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search).get("style");
-      const saved = q || window.localStorage.getItem("pub-style");
-      if (saved === "classic" || saved === "brand") setMode(saved);
-    } catch { /* التخزين غير متاح */ }
+      if (q === "classic" || q === "brand") setMode(q);
+    } catch { /* تجاهل */ }
   }, []);
-  function choose(m: "brand" | "classic") { setMode(m); try { window.localStorage.setItem("pub-style", m); } catch { /* تجاهل */ } window.scrollTo({ top: 0 }); }
+  function choose(m: "brand" | "classic") { setMode(m); window.scrollTo({ top: 0 }); }
   if (mode === "brand") return <BrandHome name={name} logoSrc={c?.["logo_url"] ? String(c["logo_url"]) : logo} heroSrc={c?.["hero_image_url"] ? String(c["hero_image_url"]) : hero}
     description={description} services={shownServices} hours={shownHours} phone={phone} wa={wa} email={c?.["email"] ? String(c["email"]) : ""} address={c?.["address"] ? String(c["address"]) : ""}
     booking={<BookingForm services={services} />} gallery={<Gallery brand />} onSwitch={() => choose("classic")} />;
