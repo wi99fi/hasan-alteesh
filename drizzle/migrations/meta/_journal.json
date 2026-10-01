@@ -57,6 +57,13 @@
       "when": 1790727221531,
       "tag": "0007_protect_super_admin_scheduling_doctor_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790832398517,
+      "tag": "0008_restrict_clinic_cases_public_read",
+      "breakpoints": true
     }
   ]
 }

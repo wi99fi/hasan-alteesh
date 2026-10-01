@@ -80,7 +80,7 @@ export function Cases({ classic = false, onCount }: { classic?: boolean; onCount
     let alive = true;
     (async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).from("clinic_cases").select("id,title,description,before_url,after_url").order("sort_order", { ascending: true }).order("created_at", { ascending: false }).limit(12);
+      const { data } = await (supabase as any).rpc("get_public_clinic_cases");
       if (alive && Array.isArray(data)) { setItems(data as CaseItem[]); onCount?.(data.length); }
     })().catch(() => {});
     return () => { alive = false; };

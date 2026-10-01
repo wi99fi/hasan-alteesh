@@ -953,6 +953,16 @@ export type Database = {
           revenue: number
         }[]
       }
+      get_public_clinic_cases: {
+        Args: never
+        Returns: {
+          after_url: string
+          before_url: string
+          description: string
+          id: string
+          title: string
+        }[]
+      }
       get_public_clinic_settings: {
         Args: never
         Returns: {
