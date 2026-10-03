@@ -49,14 +49,14 @@ const CSS = `
 .bp-ba-img,.bp-ba-after{position:absolute;inset:0;width:100%;height:100%}
 .bp-ba-img{object-fit:cover;display:block;user-select:none;pointer-events:none}
 .bp-ba-after{clip-path:inset(0 calc(100% - var(--position)) 0 0);z-index:1}
-.bp-ba-line{position:absolute;z-index:3;inset-block:0;inset-inline-start:var(--position);width:3px;background:#fff;box-shadow:0 0 0 1px var(--n);transform:translateX(-50%);pointer-events:none}
+.bp-ba-line{position:absolute;z-index:3;inset-block:0;left:var(--position);width:3px;background:#fff;box-shadow:0 0 0 1px var(--n);transform:translateX(-50%);pointer-events:none}
 .bp-ba-handle{position:absolute;top:50%;left:50%;width:48px;height:34px;border-radius:999px;background:var(--n);color:#fff;border:2px solid #fff;display:grid;place-items:center;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(6,42,64,.35)}
 .bp-ba-handle svg{width:22px;height:22px}
 .bp-ba-range{position:absolute;z-index:4;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;direction:ltr}
-.bp-ba-range:focus-visible{opacity:1;accent-color:var(--n)}
+.bp-ba-range:focus-visible{outline:3px solid var(--n);outline-offset:-5px}
 .bp-tag{position:absolute;top:8px;inset-inline-start:8px;background:var(--c);border:2px solid var(--n);border-radius:999px;padding:2px 12px;font-size:12px;font-weight:800;color:var(--n)}
-.bp-tag.before{z-index:2;inset-inline-start:auto;inset-inline-end:8px}
-.bp-tag.after{z-index:2;background:var(--s);color:var(--ink)}
+.bp-tag.before{z-index:2;left:auto;right:8px}
+.bp-tag.after{z-index:2;left:8px;right:auto;background:var(--s);color:var(--ink)}
 .bp-case-b{padding:14px 18px 18px}
 .bp-case-b h3{font-size:18px}
 .bp-case-b p{margin:6px 0 0;color:var(--mut);font-size:14px;line-height:1.8}
