@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Baby, Clock, HeartPulse, Mail, MapPin, MessageCircle, Phone, ShieldCheck, Smile, Sparkles, Stethoscope } from "lucide-react";
+import { Baby, ChevronsLeftRight, Clock, HeartPulse, Mail, MapPin, Maximize2, MessageCircle, Phone, ShieldCheck, Smile, Sparkles, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 /* نمط «هوية الشعار»: أزرق سماوي + كحلي + أزرق جليدي فاتح، بحدود عريضة كرسوم الشعار */
@@ -44,16 +44,24 @@ const CSS = `
 .bp-ico{flex:none;width:48px;height:48px;border-radius:14px;background:var(--c);border:2.5px solid var(--n);display:grid;place-items:center}
 .bp-ico svg{width:24px;height:24px;color:var(--n)}
 .bp-cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px}
-.bp-case{background:#fff;border:2.5px solid var(--n);border-radius:22px;overflow:hidden;box-shadow:5px 5px 0 var(--n);cursor:zoom-in;padding:0;text-align:start;font:inherit;color:var(--ink)}
-.bp-ba{display:grid;grid-template-columns:1fr 1fr;border-bottom:2.5px solid var(--n)}
-.bp-ba figure{position:relative;margin:0}
-.bp-ba figure+figure{border-inline-start:2.5px solid var(--n)}
-.bp-ba img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+.bp-case{background:#fff;border:2.5px solid var(--n);border-radius:22px;overflow:hidden;box-shadow:5px 5px 0 var(--n);text-align:start;font:inherit;color:var(--ink)}
+.bp-ba{position:relative;aspect-ratio:1/1;overflow:hidden;border-bottom:2.5px solid var(--n);background:var(--c);isolation:isolate}
+.bp-ba-img,.bp-ba-after{position:absolute;inset:0;width:100%;height:100%}
+.bp-ba-img{object-fit:cover;display:block;user-select:none;pointer-events:none}
+.bp-ba-after{clip-path:inset(0 calc(100% - var(--position)) 0 0);z-index:1}
+.bp-ba-line{position:absolute;z-index:3;inset-block:0;inset-inline-start:var(--position);width:3px;background:#fff;box-shadow:0 0 0 1px var(--n);transform:translateX(-50%);pointer-events:none}
+.bp-ba-handle{position:absolute;top:50%;left:50%;width:48px;height:34px;border-radius:999px;background:var(--n);color:#fff;border:2px solid #fff;display:grid;place-items:center;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(6,42,64,.35)}
+.bp-ba-handle svg{width:22px;height:22px}
+.bp-ba-range{position:absolute;z-index:4;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;direction:ltr}
+.bp-ba-range:focus-visible{opacity:1;accent-color:var(--n)}
 .bp-tag{position:absolute;top:8px;inset-inline-start:8px;background:var(--c);border:2px solid var(--n);border-radius:999px;padding:2px 12px;font-size:12px;font-weight:800;color:var(--n)}
-.bp-tag.after{background:var(--s);color:var(--ink)}
+.bp-tag.before{z-index:2;inset-inline-start:auto;inset-inline-end:8px}
+.bp-tag.after{z-index:2;background:var(--s);color:var(--ink)}
 .bp-case-b{padding:14px 18px 18px}
 .bp-case-b h3{font-size:18px}
 .bp-case-b p{margin:6px 0 0;color:var(--mut);font-size:14px;line-height:1.8}
+.bp-case-open{width:100%;margin-top:12px;border:0;border-top:1px solid var(--c);background:transparent;color:var(--n);padding:10px 0 0;display:flex;align-items:center;justify-content:center;gap:7px;font:inherit;font-weight:800;cursor:zoom-in}
+.bp-case-open svg{width:17px;height:17px}
 .bp-note{font-size:12.5px;color:var(--mut);margin-top:20px}
 .bp-book{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:start}
 .bp-book .pub-card{background:#fff;border:2.5px solid var(--n);border-radius:20px;box-shadow:6px 6px 0 var(--n);padding:24px;max-width:none!important}
@@ -71,6 +79,28 @@ const CSS = `
 export function BrandStyles() { return <style dangerouslySetInnerHTML={{ __html: CSS }} />; }
 
 type CaseItem = { id: string; title: string; description: string | null; before_url: string; after_url: string };
+
+function BeforeAfter({ item, onOpen }: { item: CaseItem; onOpen: () => void }) {
+  const [position, setPosition] = useState(50);
+  const comparisonStyle = { "--position": `${position}%` } as CSSProperties;
+  return <article className="bp-case">
+    <div className="bp-ba" style={comparisonStyle}>
+      <img className="bp-ba-img" src={item.before_url} alt={`${item.title} - قبل`} loading="lazy" />
+      <span className="bp-tag before">قبل</span>
+      <div className="bp-ba-after">
+        <img className="bp-ba-img" src={item.after_url} alt={`${item.title} - بعد`} loading="lazy" />
+        <span className="bp-tag after">بعد</span>
+      </div>
+      <div className="bp-ba-line"><span className="bp-ba-handle"><ChevronsLeftRight aria-hidden="true" /></span></div>
+      <input className="bp-ba-range" type="range" min="0" max="100" value={position} onChange={(event) => setPosition(Number(event.target.value))} aria-label={`حرّك للمقارنة بين صورتي قبل وبعد لحالة ${item.title}`} />
+    </div>
+    <div className="bp-case-b">
+      <h3>{item.title}</h3>
+      {item.description && <p>{item.description}</p>}
+      <button className="bp-case-open" type="button" onClick={onOpen}><Maximize2 aria-hidden="true" />عرض الصور بالحجم الكامل</button>
+    </div>
+  </article>;
+}
 
 /** قسم عرض الحالات (قبل/بعد). لا يظهر شيء إن لم توجد حالات. */
 export function Cases({ classic = false, onCount }: { classic?: boolean; onCount?: (n: number) => void }) {
@@ -95,13 +125,7 @@ export function Cases({ classic = false, onCount }: { classic?: boolean; onCount
   const body = <>
     <h2>حالات من عيادتنا</h2>
     <div className="bp-cases">
-      {items.map((it) => <button key={it.id} type="button" className="bp-case" onClick={() => setOpen(it)} aria-label={`عرض حالة ${it.title}`}>
-        <div className="bp-ba">
-          <figure><img src={it.before_url} alt={`${it.title} - قبل`} loading="lazy" /><span className="bp-tag">قبل</span></figure>
-          <figure><img src={it.after_url} alt={`${it.title} - بعد`} loading="lazy" /><span className="bp-tag after">بعد</span></figure>
-        </div>
-        <div className="bp-case-b"><h3>{it.title}</h3>{it.description && <p>{it.description}</p>}</div>
-      </button>)}
+      {items.map((it) => <BeforeAfter key={it.id} item={it} onOpen={() => setOpen(it)} />)}
     </div>
     <p className="bp-note">تُنشر الصور بموافقة أصحابها، وتختلف النتائج من حالة لأخرى حسب وضع كل مريض.</p>
     {open && <div className="bp-lb" role="dialog" aria-modal="true" aria-label={open.title} onClick={() => setOpen(null)}>
