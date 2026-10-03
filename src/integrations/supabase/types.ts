@@ -291,6 +291,7 @@ export type Database = {
           primary_color: string
           public_description: string | null
           public_services: string | null
+          public_style: string
           updated_at: string
           updated_by: string | null
         }
@@ -310,6 +311,7 @@ export type Database = {
           primary_color?: string
           public_description?: string | null
           public_services?: string | null
+          public_style?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -329,6 +331,7 @@ export type Database = {
           primary_color?: string
           public_description?: string | null
           public_services?: string | null
+          public_style?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -977,6 +980,7 @@ export type Database = {
           primary_color: string
           public_description: string
           public_services: string
+          public_style: string
         }[]
       }
       has_role: {
