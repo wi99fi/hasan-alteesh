@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Activity, CalendarDays, ChevronLeft, CircleDollarSign, FileText, HeartPulse, LayoutDashboard, LogOut, Menu, Palette, Plus, Search, Settings, ShieldAlert, Stethoscope, UserRound, MessageCircle, Download, Users, X, Eye, Pencil, Trash2, Inbox, Package, History, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { syncDrDay } from "@/lib/dr-day-sync.functions";
 import { ensureClinicProfile, createClinicUser, deleteClinicUser, updateClinicUser } from "@/lib/clinic.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -341,7 +342,7 @@ function Appointments({ data, myRoles, myId }: { data: Awaited<ReturnType<typeof
   const chairs=[...data.chairs.filter(c=>c.is_active),{id:"none",name:"دون كرسي",color:"#94a3b8",is_active:true}] as {id:string;name:string;color:string;is_active:boolean}[];
   const pos=(s:Date,e:Date)=>{const top=((s.getHours()+s.getMinutes()/60)-START)*ROW;const h=Math.max(22,((e.getTime()-s.getTime())/3600000)*ROW);return {top:Math.max(0,top),height:h};};
   const others=busy.filter(b=>!mine.some(m=>m.starts_at===b.starts_at&&(m.chair_id??null)===(b.chair_id??null)&&(!isDoctorOnly||b.doctor_id===myId)));
-  return <div className="panel day-calendar">
+  return <><DrDaySyncButton /><div className="panel day-calendar">
     <div className="cal-toolbar"><label>اليوم<Input type="date" value={day} onChange={e=>setDay(e.target.value)}/></label><span className="cal-legend"><i className="lg-mine"/>موعد {isDoctorOnly?"لمرضاك":"مسجّل"} <i className="lg-busy"/>مشغول</span></div>
     <div className="cal-scroll"><div className="cal-grid" style={{gridTemplateColumns:`64px repeat(${chairs.length},minmax(150px,1fr))`}}>
       <div className="cal-head"/>{chairs.map(c=><div key={c.id} className="cal-head"><span className="chair-dot" style={{backgroundColor:c.color}}/>{c.name}</div>)}
@@ -354,7 +355,7 @@ function Appointments({ data, myRoles, myId }: { data: Awaited<ReturnType<typeof
       </div>;})}
     </div></div>
     {!data.chairs.length&&<p className="subheading">أضف كراسي العيادة من صفحة الإعدادات لتظهر أعمدتها هنا.</p>}
-  </div>;
+  </div></>;
 }
 async function exportExcel(data: Awaited<ReturnType<typeof loadClinic>>) {
   const XLSX = await import("xlsx"); const wb = XLSX.utils.book_new();
@@ -369,6 +370,9 @@ async function exportExcel(data: Awaited<ReturnType<typeof loadClinic>>) {
   wb.Workbook = { Views: [{ RTL: true }] };
   XLSX.writeFile(wb, `نسخة-العيادة-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
+function DrDaySyncButton(){const run=useServerFn(syncDrDay);const [msg,setMsg]=useState("");const [busy,setBusy]=useState(false);
+  async function go(){setBusy(true);setMsg("");try{const r=await run({data:{}});setMsg(r.ok?`تمت المزامنة: ${"upserted" in r?r.upserted:0} محدَّث، ${"removed" in r?r.removed:0} محذوف`:`فشلت المزامنة: ${"error" in r?r.error:""}`);}catch(e){setMsg(e instanceof Error?e.message:"فشلت المزامنة");}finally{setBusy(false);}}
+  return <div className="panel" style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",marginBottom:12}}><Button onClick={go} disabled={busy}>{busy?"جارٍ المزامنة…":"مزامنة الآن"}</Button><span>منظّم يوم الطبيب</span>{msg&&<span role="status">{msg}</span>}</div>;}
 function Clinical({ data }: { data: Awaited<ReturnType<typeof loadClinic>> }) { return <div className="dashboard-grid"><div className="panel"><SectionTitle title="العلاجات الأخيرة" link="/clinical" />{data.treatments.map((t) => <div className="record-row" key={t.id}><Stethoscope /><div><strong>{t.title}</strong><span>{t.patients?.full_name} · الأسنان {t.tooth_numbers || "—"}</span></div><b>{money(t.cost)}</b></div>)}</div><div className="panel"><SectionTitle title="الوصفات الأخيرة" link="/clinical" />{data.prescriptions.map((p) => <div className="record-row" key={p.id}><FileText /><div><strong>{p.medication}</strong><span>{p.patients?.full_name} · {p.dosage ?? "حسب الوصفة"}</span></div></div>)}</div><div className="panel"><SectionTitle title="سجل الأسنان" link="/clinical" />{data.dentalChart.map((d) => <div className="record-row" key={d.id}><span className="avatar">{d.tooth_number}</span><div><strong>{d.condition}</strong><span>{d.patients?.full_name} · {d.treatment ?? "دون إجراء"}</span></div></div>)}</div></div>; }
 const escHtml = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as Record<string, string>)[ch] ?? ch);
 
@@ -457,7 +461,7 @@ function SettingsPage({ data, theme, onTheme }: { data: Awaited<ReturnType<typeo
 }
 
 function CreateForm({ page, data, done }: { page: Page; data: Awaited<ReturnType<typeof loadClinic>> | undefined; done: () => void }) {
-  const createUser=useServerFn(createClinicUser); const [message,setMessage]=useState("");
+  const createUser=useServerFn(createClinicUser); const syncFn=useServerFn(syncDrDay); const [message,setMessage]=useState("");
   async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault(); const f=new FormData(e.currentTarget); const {data:{user}}=await supabase.auth.getUser(); if(!user)return; let error:unknown;
     if(page==='patients'){({error}=await supabase.from('patients').insert({full_name:String(f.get('fullName')),file_number:String(f.get('fileNumber'))||null,phone:String(f.get('phone'))||null,date_of_birth:String(f.get('birth'))||null,allergies:String(f.get('allergies'))||null,chronic_diseases:String(f.get('chronic'))||null,created_by:user.id}));}
     else if(page==='appointments'){const start=new Date(String(f.get('startsAt'))); ({error}=await supabase.from('appointments').insert({patient_id:String(f.get('patientId')),doctor_id:String(f.get('doctorId'))||null,chair_id:String(f.get('chairId'))||null,starts_at:start.toISOString(),ends_at:new Date(start.getTime()+Number(f.get('duration')||30)*60000).toISOString(),reason:String(f.get('reason')),created_by:user.id}));}
@@ -466,7 +470,7 @@ function CreateForm({ page, data, done }: { page: Page; data: Awaited<ReturnType
     else if(page==='team'){try{const created=await createUser({data:{email:String(f.get('email')),password:String(f.get('password')),fullName:String(f.get('fullName')),phone:String(f.get('phone')),specialty:String(f.get('specialty')),role:String(f.get('role')) as 'doctor'}});const pct=Number(f.get('doctorPercent')||0);if(created?.id&&String(f.get('role'))==='doctor'&&pct>0){const r=await sb.from('doctor_shares').upsert({doctor_id:created.id,percent:pct});if(r.error)error=r.error;}}catch(e){error=e;}}
     else if(page==='inventory'){const qty=Math.max(0,Number(f.get('quantity')||0)); const ins=await sb.from('inventory_items').insert({name:String(f.get('name')).trim(),unit:String(f.get('unit')||'قطعة').trim()||'قطعة',min_quantity:Math.max(0,Number(f.get('minQuantity')||0)),unit_cost:Math.max(0,Number(f.get('unitCost')||0))}).select('id').single(); error=ins.error; if(!error&&qty>0){const mv=await sb.from('inventory_movements').insert({item_id:ins.data.id,kind:'in',quantity:qty,note:'رصيد افتتاحي',created_by:user.id}); error=mv.error;}}
     else if(page==='settings'){({error}=await supabase.from('chairs').insert({name:String(f.get('name')),color:String(f.get('color'))}));}
-    if(error){setMessage(error instanceof Error?error.message:String((error as AnyRow)?.["message"]??error));return;} done();}
+    if(error){setMessage(error instanceof Error?error.message:String((error as AnyRow)?.["message"]??error));return;} if(page==='appointments'||(page==='invoices'&&String(f.get('kind'))==='payment')){const pid=String(f.get('patientId')||'');if(pid)void syncFn({data:{patientId:pid}}).catch(()=>{});} done();}
   return <form className="form-stack" onSubmit={submit}>
     {page==='patients'&&<><label>اسم المريض<Input name="fullName" required/></label><div className="form-grid"><label>رقم الملف<Input name="fileNumber"/></label><label>الهاتف<Input name="phone"/></label></div><label>تاريخ الميلاد<Input name="birth" type="date"/></label><label>الحساسية<Textarea name="allergies"/></label><label>الأمراض المزمنة<Textarea name="chronic"/></label></>}
     {page==='appointments'&&<><PatientSelect data={data}/><label>الطبيب<select name="doctorId"><option value="">دون تحديد</option>{data?.profiles.map(p=><option key={p.id} value={p.id}>{p.full_name}</option>)}</select></label><label>الكرسي<select name="chairId"><option value="">دون تحديد</option>{data?.chairs.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><div className="form-grid"><label>التاريخ والوقت<Input name="startsAt" type="datetime-local" step={900} required/></label><label>مدة الموعد<select name="duration" defaultValue="30"><option value="15">15 دقيقة</option><option value="30">30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">ساعة</option><option value="90">ساعة ونصف</option><option value="120">ساعتان</option></select></label></div><label>سبب الزيارة<Input name="reason" required/></label></>}
